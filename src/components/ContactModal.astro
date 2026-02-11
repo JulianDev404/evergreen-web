@@ -192,11 +192,11 @@ const { company, getImageUrl } = Astro.props;
       message: formData.get("message"),
     };
 
-    console.log("Sending data:", data);
-    console.log(
-      "URL:",
-      `${import.meta.env.PUBLIC_API_URL}/api/contact-submissions`,
-    );
+    // console.log("Sending data:", data);
+    // console.log(
+    //   "URL:",
+    //   `${import.meta.env.PUBLIC_API_URL}/api/contact-submissions`,
+    // );
 
     try {
       const response = await fetch(
@@ -211,7 +211,7 @@ const { company, getImageUrl } = Astro.props;
       );
 
       const result = await response.json();
-      console.log("Response:", result);
+      // console.log("Response:", result);
 
       if (response.ok) {
         alert("Message sent successfully!");

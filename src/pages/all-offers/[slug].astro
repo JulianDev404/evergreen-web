@@ -1,7 +1,7 @@
 ---
 // apps/web/src/pages/offers/[slug].astro
 import Layout from "../../layouts/Layout.astro";
-import Promise from "@/components/services/Promise.astro";
+import Promise from "../../components/services/Promise.astro";
 import { Icon } from "astro-icon/components";
 import { getImageUrl } from "../../utils/payload";
 import imageds from "../../assets/plan-2.jpg";
@@ -10,7 +10,6 @@ import defaultHeroImage from "../../assets/plan-2.jpg";
 export const prerender = false;
 
 const { slug } = Astro.params;
-console.log(slug);
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
 // Obtener la página de ofertas
