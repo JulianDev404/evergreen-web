@@ -1,0 +1,12 @@
+---
+// apps/web/src/components/RecaptchaScript.astro
+// Este componente debe ser incluido en el layout principal (Layout.astro)
+
+const recaptchaSiteKey = import.meta.env.PUBLIC_RECAPTCHA_SITE_KEY;
+---
+
+{
+  recaptchaSiteKey && (
+    <script src={`https://www.google.com/recaptcha/api.js`} async defer />
+  )
+}

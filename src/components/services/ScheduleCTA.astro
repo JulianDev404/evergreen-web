@@ -1,0 +1,40 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  title: string;
+  highlightedCity?: string;
+  description: string;
+  ctaText?: string;
+  ctaLink?: string;
+}
+
+const {
+  title,
+  description,
+  ctaText = "Schedule Now",
+  ctaLink = "#schedule",
+} = Astro.props;
+---
+
+<!-- Sección final de CTA -->
+<div class="bg-evergreen-800 py-12 lg:py-20">
+  <div class="container mx-auto px-6 lg:px-16 lg:text-center">
+    <h3
+      class="text-xl lg:text-4xl font-bold text-white mb-4 max-w-2xl mx-auto leading-tight"
+    >
+      {title}
+    </h3>
+    <p
+      class="text-neutral-100 text-base lg:text-lg mb-8 max-w-3xl mx-auto leading-relaxed"
+    >
+      {description}
+    </p>
+    <a
+      href={ctaLink}
+      class="inline-block bg-[#0FA623] text-white font-bold py-2 px-10 rounded-full text-md hover:bg-[#0FA623]/90 transition-colors"
+    >
+      {ctaText}
+    </a>
+  </div>
+</div>

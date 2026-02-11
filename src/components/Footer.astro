@@ -1,0 +1,370 @@
+---
+import { Icon } from "astro-icon/components";
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+// Obtener la configuración del sitio
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const siteSettings = await getSiteSettings();
+
+const { company, contact, socialMedia, footer, legal, payment } = siteSettings;
+---
+
+<!-- Footer Único - Desktop y Mobile -->
+<footer class="bg-black text-white border-t-[0.5px] border-[#D9D9D9]">
+  <!-- Desktop Version -->
+  <div class="hidden lg:block pt-12 pb-6">
+    <div class="container mx-auto px-4 h-[490px]">
+      <div class="flex justify-between items-center gap-10 mb-8 h-full">
+        <!-- Company Info -->
+        <div class="space-y-2">
+          <img
+            src={API_URL + company.logo.url}
+            alt={company.name}
+            class="h-16 w-auto mb-4"
+          />
+
+          <p class="text-white text-md">
+            {contact.address}
+          </p>
+
+          <p class="text-white font-bold text-md">
+            Copyright © {footer.copyrightYear}
+            {company.name}.
+          </p>
+          <p class="text-white text-md">
+            {footer.copyrightText} |
+            <a
+              href={legal.privacyPolicyUrl}
+              class="hover:text-[#0FA623] transition-colors font-bold"
+            >
+              Privacy Policy
+            </a>
+          </p>
+
+          <!-- Social Media -->
+          {
+            (socialMedia?.facebook ||
+              socialMedia?.instagram ||
+              socialMedia?.twitter) && (
+              <div class="flex gap-3 pt-2">
+                {socialMedia.facebook && (
+                  <a
+                    href={socialMedia.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:opacity-80 transition-opacity"
+                    aria-label="Facebook"
+                  >
+                    <Icon name="facebook" size={30} />
+                  </a>
+                )}
+                {socialMedia.instagram && (
+                  <a
+                    href={socialMedia.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:opacity-80 transition-opacity"
+                    aria-label="Instagram"
+                  >
+                    <Icon name="instagram" size={30} />
+                  </a>
+                )}
+                {socialMedia.twitter && (
+                  <a
+                    href={socialMedia.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:opacity-80 transition-opacity"
+                    aria-label="Twitter"
+                  >
+                    <Icon name="x" size={30} />
+                  </a>
+                )}
+                {socialMedia.linkedin && (
+                  <a
+                    href={socialMedia.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:opacity-80 transition-opacity"
+                    aria-label="LinkedIn"
+                  >
+                    <Icon name="linkedin" size={30} />
+                  </a>
+                )}
+                {socialMedia.youtube && (
+                  <a
+                    href={socialMedia.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="hover:opacity-80 transition-opacity"
+                    aria-label="YouTube"
+                  >
+                    <Icon name="youtube" size={30} />
+                  </a>
+                )}
+              </div>
+            )
+          }
+        </div>
+
+        <div class="border-l border-white h-40"></div>
+
+        <!-- 24/7 Live Answering -->
+        {footer.show24_7Badge && (
+          <>
+            <div class="flex items-center justify-center">
+              <div class="grid grid-cols-1 items-center justify-center gap-4">
+                <div class="flex justify-center">
+                  <Icon name="clock-add" size={65} />
+                </div>
+                <h4 class="text-lg font-bold text-white text-center leading-tight">
+                  24/7 Live<br />Answering
+                </h4>
+              </div>
+            </div>
+
+            <div class="border-l border-white h-40"></div>
+          </>
+        )}
+
+        <!-- Contact Phone -->
+        <div class="flex items-center justify-center">
+          <div class="grid grid-cols-1 items-center justify-center gap-4">
+            <div class="flex justify-center">
+              <Icon name="phone-add" size={65} />
+            </div>
+            <a
+              class="text-base font-bold text-center bg-[#0FA623] hover:bg-[#0FA623]/90 text-white px-6 py-3 rounded-full transition-colors"
+              href={`tel:${contact.phone.replace(/\D/g, "")}`}
+            >
+              {contact.phone}
+            </a>
+          </div>
+        </div>
+
+        <div class="border-l border-white h-40"></div>
+
+        <!-- Email Contact -->
+        <div class="flex items-center justify-center">
+          <div class="grid grid-cols-1 items-center justify-center gap-4">
+            <div class="flex justify-center">
+              <Icon name="email" size={65} />
+            </div>
+            <a
+              class="text-base font-bold text-center bg-[#0FA623] hover:bg-[#0FA623]/90 text-white px-8 py-3 rounded-full transition-colors"
+              href={`mailto:${contact.email}`}
+            >
+              Email Us
+            </a>
+          </div>
+        </div>
+
+        {footer.showPaymentMethods && (
+          <>
+            <div class="border-l border-white h-40"></div>
+
+            <!-- Payment Methods -->
+            <div class="flex items-center justify-center">
+              <div class="grid grid-cols-1 items-center justify-center gap-4">
+                <h4 class="text-white text-md">{footer.paymentMethodsTitle}</h4>
+                <div class="flex flex-col space-y-1">
+                  <!-- Fila 1 -->
+                  <div class="flex gap-2">
+                    {payment.acceptedPayments?.some(p => p.method === 'cash') && (
+                      <Icon name="payment-method-cash" width={75} height={55} />
+                    )}
+                    {payment.acceptedPayments?.some(p => p.method === 'visa') && (
+                      <Icon name="payment-method-visa" width={75} height={55} />
+                    )}
+                  </div>
+
+                  <!-- Fila 2 -->
+                  <div class="flex gap-2">
+                    {payment.acceptedPayments?.some(p => p.method === 'mastercard') && (
+                      <Icon name="payment-method-mastercard" width={75} height={55} />
+                    )}
+                    {payment.acceptedPayments?.some(p => p.method === 'discover') && (
+                      <Icon name="payment-method-discover" width={75} height={55} />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Version -->
+  <div class="lg:hidden py-8">
+    <div class="container mx-auto px-4">
+      <!-- Logo -->
+      <div class="flex justify-center mb-4">
+        <img
+          src={API_URL + company.logo.url}
+          alt={company.name}
+          class="h-16 w-auto"
+        />
+      </div>
+
+      <!-- Address -->
+      <p class="text-white text-center text-sm">
+        {contact.address}
+      </p>
+
+      <!-- Copyright -->
+      <p class="text-white text-center font-bold text-sm">
+        Copyright © {footer.copyrightYear}
+        {company.name}.
+      </p>
+
+      <!-- 24/7 Live Answering -->
+      {footer.show24_7Badge && (
+        <div class="flex items-center justify-center gap-2 mb-8">
+          <Icon name="clock-add" size={24} />
+          <h4 class="text-sm font-bold text-white">24/7 Live Answering</h4>
+        </div>
+      )}
+
+      <!-- Contact Section with dividers -->
+      <div class="flex items-center justify-center gap-4 mb-6">
+        <!-- Phone -->
+        <div class="flex flex-col items-center gap-2">
+          <Icon name="phone-add" size={45} />
+          <a
+            class="text-sm font-bold text-center bg-evergreen-primary hover:bg-evergreen-600 text-white px-2 py-1 rounded-full transition-colors whitespace-nowrap"
+            href={`tel:${contact.phone.replace(/\D/g, "")}`}
+          >
+            {contact.phone}
+          </a>
+        </div>
+
+        <!-- Divider -->
+        <div class="h-24 w-px bg-white"></div>
+
+        <!-- Email -->
+        <div class="flex flex-col items-center gap-2">
+          <Icon name="email" size={45} />
+          <a
+            class="w-fittext-sm font-bold text-center bg-evergreen-primary hover:bg-evergreen-600 text-white px-2 py-1 rounded-full transition-colors"
+            href={`mailto:${contact.email}`}
+          >
+            Email Us
+          </a>
+        </div>
+
+        {footer.showPaymentMethods && (
+          <>
+            <!-- Divider -->
+            <div class="h-24 w-px bg-white"></div>
+
+            <!-- Payment Methods -->
+            <div class="flex flex-col gap-2">
+              <h4 class="text-white text-center text-xs whitespace-nowrap">
+                {footer.paymentMethodsTitle}
+              </h4>
+              <div class="grid grid-cols-2 gap-1">
+                {payment.acceptedPayments?.some(p => p.method === 'cash') && (
+                  <Icon name="payment-method-cash" width={50} height={36} />
+                )}
+                {payment.acceptedPayments?.some(p => p.method === 'visa') && (
+                  <Icon name="payment-method-visa" width={50} height={36} />
+                )}
+                {payment.acceptedPayments?.some(p => p.method === 'mastercard') && (
+                  <Icon name="payment-method-mastercard" width={50} height={36} />
+                )}
+                {payment.acceptedPayments?.some(p => p.method === 'discover') && (
+                  <Icon name="payment-method-discover" width={50} height={36} />
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <!-- Social Media -->
+      {
+        (socialMedia?.facebook ||
+          socialMedia?.instagram ||
+          socialMedia?.twitter ||
+          socialMedia?.linkedin ||
+          socialMedia?.youtube) && (
+          <div class="flex justify-center gap-4 mb-4">
+            {socialMedia.facebook && (
+              <a
+                href={socialMedia.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:opacity-80 transition-opacity"
+                aria-label="Facebook"
+              >
+                <Icon name="facebook" size={24} />
+              </a>
+            )}
+            {socialMedia.instagram && (
+              <a
+                href={socialMedia.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:opacity-80 transition-opacity"
+                aria-label="Instagram"
+              >
+                <Icon name="instagram" size={24} />
+              </a>
+            )}
+            {socialMedia.twitter && (
+              <a
+                href={socialMedia.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:opacity-80 transition-opacity"
+                aria-label="Twitter"
+              >
+                <Icon name="x" size={24} />
+              </a>
+            )}
+            {socialMedia.linkedin && (
+              <a
+                href={socialMedia.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:opacity-80 transition-opacity"
+                aria-label="LinkedIn"
+              >
+                <Icon name="linkedin" size={24} />
+              </a>
+            )}
+            {socialMedia.youtube && (
+              <a
+                href={socialMedia.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:opacity-80 transition-opacity"
+                aria-label="YouTube"
+              >
+                <Icon name="youtube" size={24} />
+              </a>
+            )}
+          </div>
+        )
+      }
+
+      <!-- Bottom Text -->
+      <p class="text-white text-center text-sm">
+        {footer.copyrightText} |
+        <a
+          href={legal.privacyPolicyUrl}
+          class="hover:text-evergreen-primary transition-colors font-bold"
+        >
+          Privacy Policy
+        </a>
+      </p>
+    </div>
+  </div>
+</footer>

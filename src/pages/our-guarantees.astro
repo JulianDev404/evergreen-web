@@ -1,0 +1,273 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl, processMarkdown } from "../utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const [siteSettings, contactPages] = await Promise.all([
+  getSiteSettings(),
+  getContactPages(),
+]);
+
+const { company } = siteSettings;
+const { maintenancePlans, location, contactForm } = contactPages;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "Contact" },
+    { name: "Our Guarantees", url: "/our-guarantees" },
+  ];
+};
+
+const guarantees = [
+  {
+    icon: "wrench-2",
+    title: "100% Satisfaction Guarantee",
+  },
+  {
+    icon: "wrench-2",
+    title: "99% Time Guarantee",
+  },
+  {
+    icon: "wrench-2",
+    title: "Affordable Prices",
+  },
+  {
+    icon: "wrench-2",
+    title: "24/7 Customer Support",
+  },
+  {
+    icon: "wrench-2",
+    title: "24/7 Customer Support",
+  },
+  {
+    icon: "wrench-2",
+    title: "24/7 Customer Support",
+  },
+];
+---
+
+<Layout title="Our Guarantees | Evergreen Services" navbarBG={true}>
+  <section
+    class="pt-28 lg:pt-32 pb-10 lg:pb-18 bg-white flex flex-col items-center gap-18"
+  >
+    <section
+      class="flex flex-col justify-center items-start gap-4 container mx-auto max-w-6xl"
+    >
+      <!-- Breadcrumbs -->
+      <section class="flex">
+        <div class="flex items-center gap-2 text-sm text-neutral-secondary">
+          {
+            generateBreadcrumbs().map((breadcrumb, index) => (
+              <span key={breadcrumb.url} class="flex items-center gap-2">
+                <a href={breadcrumb.url} class="">
+                  {breadcrumb.name}
+                </a>
+                {index < generateBreadcrumbs().length - 1 && (
+                  <span class="">&rsaquo;</span>
+                )}
+              </span>
+            ))
+          }
+        </div>
+      </section>
+
+      <span
+        class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-lg font-bold rounded-full"
+      >
+        Our Guarantees
+      </span>
+
+      <!-- Benefits Grid - 3x3 -->
+      <section class="w-full max-w-6xl mx-auto mt-4">
+        <div class="grid grid-cols-3 gap-4">
+          {
+            guarantees.map((benefit: any) => (
+              <div class="bg-[#042F0A] flex flex-col items-center justify-center gap-3 py-8 px-4 rounded-2xl border border-[#11BB28] aspect-square">
+                <Icon name={benefit.icon} size={48} class="text-[#44EE5B]" />
+                <span class="text-white text-base leading-tight text-center font-medium">
+                  {benefit.title}
+                </span>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+    </section>
+
+    <!-- Location + Form Section -->
+    <section
+      class="w-full flex justify-between items-start gap-8 max-w-6xl px-6"
+    >
+      <!-- Left: Location Section -->
+      <section class="flex flex-col justify-start items-start gap-6 w-1/2">
+        <div class="relative w-full">
+          <img
+            src={location.mapImage
+              ? getImageUrl(location.mapImage)
+              : "/assets/map-2.png"}
+            alt="Map"
+            class="w-full rounded-2xl"
+          />
+          {
+            location.pinImage && (
+              <img
+                src={getImageUrl(location.pinImage)}
+                alt="Location pin"
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12"
+              />
+            )
+          }
+          <div
+            class="absolute top-1/4 right-1/6 -translate-y-1/2 bg-white p-4 rounded-xl shadow-lg"
+          >
+            <div class="flex flex-col justify-center mb-4">
+              <img
+                src={getImageUrl(company.logoAlt)}
+                alt={company.companyName}
+                class="w-16 mb-2"
+              />
+              <h4 class="text-black text-sm font-bold">
+                Warwick, Rhode Island
+              </h4>
+              <p class="text-black text-xs whitespace-pre-line">
+                {location.address}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6 w-full">
+          <span
+            class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm font-bold rounded-full w-fit"
+          >
+            {location.badge}
+          </span>
+          <div class="w-full">
+            <h2 class="text-4xl text-[#11BB28] font-bold mb-4">
+              {location.title}
+            </h2>
+            <p
+              class="text-neutral-700 text-base mb-6"
+              set:html={processMarkdown(location.description)}
+            />
+          </div>
+          <div>
+            <div class="flex gap-4 items-center">
+              <div class="bg-evergreen-900 p-4 rounded-xl">
+                <Icon name="map-marker" class="text-[#44EE5B]" size={32} />
+              </div>
+              <div class="flex flex-col items-start">
+                <span class="text-[#0D8C1E] text-sm font-semibold">
+                  {location.locationName}
+                </span>
+                <span class="text-neutral-900 text-sm whitespace-pre-line">
+                  {location.address}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Contact Form -->
+      <section class="flex justify-center gap-2 w-1/2">
+        <div
+          class="rounded-3xl overflow-hidden border-2 border-neutral-400 p-6 w-full"
+        >
+          <div class="flex justify-center mb-6">
+            <img
+              src={getImageUrl(company.logoAlt)}
+              alt={company.companyName}
+              class="h-12 w-auto"
+            />
+          </div>
+
+          <form id="contact-form-desktop" class="space-y-4 p-6">
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                First Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                placeholder="e.g., John"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                Last Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                placeholder="e.g., Smith"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                Email <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="e.g., john.smith@email.com"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                placeholder="e.g., (401) 293-2048"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                How we can help you <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="message"
+                placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                required
+                rows="4"
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
+            >
+              {contactForm.submitText}
+            </button>
+          </form>
+        </div>
+      </section>
+    </section>
+  </section>
+</Layout>

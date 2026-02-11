@@ -1,0 +1,410 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl, processMarkdown } from "../utils/payload";
+import DynamicIcon from "@/components/DynamicIcon.astro";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const [siteSettings, contactPages] = await Promise.all([
+  getSiteSettings(),
+  getContactPages(),
+]);
+
+const { company } = siteSettings;
+const { maintenancePlans, location, contactForm } = contactPages;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "Contact" },
+    { name: "Maintenance Plans", url: "/maintenance-plans" },
+  ];
+};
+---
+
+<Layout title="Maintenance Plans | Evergreen Services" navbarBG={true}>
+  <section
+    class="pt-28 lg:pt-32 pb-10 lg:pb-20 bg-white flex flex-col items-center gap-10 lg:gap-16"
+  >
+    <!-- Header Section -->
+    <section
+      class="flex flex-col justify-center items-start gap-4 lg:gap-6 px-6 lg:px-10 w-full lg:container lg:mx-auto lg:max-w-6xl"
+    >
+      <!-- Breadcrumbs -->
+      <section class="flex">
+        <div class="flex items-center gap-2 text-sm text-neutral-secondary">
+          {
+            generateBreadcrumbs().map((breadcrumb, index) => (
+              <span key={breadcrumb.url} class="flex items-center gap-2">
+                <a href={breadcrumb.url} class="">
+                  {breadcrumb.name}
+                </a>
+                {index < generateBreadcrumbs().length - 1 && (
+                  <span class="">&rsaquo;</span>
+                )}
+              </span>
+            ))
+          }
+        </div>
+      </section>
+
+      <!-- Badge -->
+      <span
+        class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm lg:text-base font-bold rounded-full"
+      >
+        {maintenancePlans.badge}
+      </span>
+
+      <!-- Title and Subtitle -->
+      <div class="w-full flex flex-col gap-3">
+        <h1
+          class="text-3xl lg:text-4xl text-evergreen-700 font-bold leading-tight"
+        >
+          {maintenancePlans.title}
+        </h1>
+        <p class="text-neutral-900 text-base lg:text-lg leading-relaxed">
+          {maintenancePlans.subtitle}
+        </p>
+        <h2 class="text-2xl lg:text-3xl text-evergreen-700 font-bold mt-2">
+          {maintenancePlans.benefitsTitle}
+        </h2>
+      </div>
+    </section>
+
+    <!-- Benefits Grid -->
+    <section class="w-full px-6 lg:px-10 lg:container lg:mx-auto lg:max-w-6xl">
+      <div
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6"
+      >
+        {
+          maintenancePlans.benefits?.map((benefit: any) => (
+            <div class="bg-evergreen-900 flex flex-col items-center justify-center gap-4 py-8 lg:py-10 px-4 rounded-2xl border-2 border-evergreen-primary aspect-square">
+              {/* <Icon
+                name={benefit.icon}
+                class="w-12 h-12 lg:w-16 lg:h-16 text-[#44EE5B]"
+              /> */}
+              <DynamicIcon
+                icon={benefit.icon}
+                class="w-12 h-12 lg:w-16 lg:h-16 text-[#44EE5B]"
+              />
+              <span class="text-white text-sm lg:text-base leading-tight text-center font-medium">
+                {benefit.name}
+              </span>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- System Check Sections -->
+    {
+      maintenancePlans.systemChecks?.map((section: any) => (
+        <section class="w-full flex flex-col items-start gap-4 lg:gap-6 px-6 lg:px-10 lg:container lg:mx-auto lg:max-w-6xl">
+          <h3 class="text-evergreen-700 font-bold text-2xl lg:text-4xl">
+            {section.title}
+          </h3>
+
+          <div class="flex flex-col lg:flex-row justify-start items-start gap-4 lg:gap-6 w-full">
+            {section.systems?.map((system: any) => (
+              <div class="flex flex-col border-2 border-neutral-300 p-4 lg:p-6 rounded-xl w-full bg-white">
+                <h4 class="text-evergreen-700 font-bold text-lg lg:text-xl mb-3 lg:mb-4">
+                  {system.systemName}
+                </h4>
+                <ul class="space-y-2">
+                  {system.checkItems?.map((checkItem: any, index: number) => (
+                    <li class="flex items-start gap-2 text-neutral-700 text-sm lg:text-base">
+                      <span class="text-evergreen-primary mt-1 flex-shrink-0">
+                        •
+                      </span>
+                      <span>
+                        {checkItem.item}
+                        {system.showMore &&
+                          index === system.checkItems.length - 1 && (
+                            <button class="text-evergreen-primary font-semibold ml-1 hover:underline">
+                              ...more
+                            </button>
+                          )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+
+    <!-- Contact Form (Mobile Only - shows before map) -->
+    <section class="flex lg:hidden justify-center w-full px-6">
+      <div
+        class="rounded-2xl overflow-hidden border-2 border-neutral-300 p-6 w-full max-w-md bg-white"
+      >
+        <div class="flex justify-center mb-6">
+          <img
+            src={getImageUrl(company.logoAlt)}
+            alt={company.companyName}
+            class="h-10 w-auto"
+          />
+        </div>
+
+        <form id="contact-form-mobile" class="space-y-4">
+          <div>
+            <label class="text-black text-sm font-medium mb-2 block">
+              First Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="firstName"
+              placeholder="e.g., John"
+              required
+              class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="text-black text-sm font-medium mb-2 block">
+              Last Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="lastName"
+              placeholder="e.g., Smith"
+              required
+              class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="text-black text-sm font-medium mb-2 block">
+              Email <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              placeholder="e.g., john.smith@email.com"
+              required
+              class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="text-black text-sm font-medium mb-2 block">
+              Phone Number <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder="e.g., (401) 293-2048"
+              required
+              class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label class="text-black text-sm font-medium mb-2 block">
+              How we can help you <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              name="message"
+              placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+              required
+              rows="4"
+              class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent resize-none"
+            ></textarea>
+          </div>
+          <button
+            type="submit"
+            class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
+          >
+            {contactForm.submitText}
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Location + Form Section (Desktop) -->
+    <section
+      class="w-full flex flex-col lg:flex-row justify-between items-start gap-8 lg:gap-12 px-6 lg:px-10 lg:container lg:mx-auto lg:max-w-6xl"
+    >
+      <!-- Left: Location Section -->
+      <section
+        class="flex flex-col justify-start items-start gap-6 lg:gap-8 w-full lg:w-1/2 order-2 lg:order-1"
+      >
+        <div class="relative w-full">
+          <img
+            src={location.mapImage
+              ? getImageUrl(location.mapImage)
+              : "/assets/map-2.png"}
+            alt="Map"
+            class="w-full rounded-xl lg:rounded-2xl"
+          />
+          {
+            location.pinImage && (
+              <img
+                src={getImageUrl(location.pinImage)}
+                alt="Location pin"
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 lg:w-16"
+              />
+            )
+          }
+          <div
+            class="absolute top-1/4 right-4 lg:right-8 -translate-y-1/2 bg-white p-4 lg:p-6 rounded-xl shadow-lg w-[200px] lg:w-[250px]"
+          >
+            <div class="flex flex-col justify-center gap-2">
+              <img
+                src={getImageUrl(company.logoAlt)}
+                alt={company.companyName}
+                class="w-12 lg:w-20"
+              />
+              <h4 class="text-black text-sm lg:text-base font-bold">
+                Warwick, Rhode Island
+              </h4>
+              <p
+                class="text-black text-xs lg:text-sm whitespace-pre-line leading-tight"
+              >
+                {location.address}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6 lg:gap-8 w-full">
+          <span
+            class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm lg:text-base font-bold rounded-full w-fit"
+          >
+            {location.badge}
+          </span>
+          <div class="w-full">
+            <h2
+              class="text-3xl lg:text-4xl text-evergreen-primary font-bold mb-4"
+            >
+              {location.title}
+            </h2>
+            <div
+              class="text-neutral-900 text-base lg:text-lg leading-relaxed"
+              set:html={processMarkdown(location.description)}
+            />
+          </div>
+          <div>
+            <div class="flex gap-4 items-start">
+              <div class="bg-evergreen-900 p-4 lg:p-6 rounded-xl flex-shrink-0">
+                <Icon
+                  name="map-marker"
+                  class="text-[#44EE5B] w-8 h-8 lg:w-10 lg:h-10"
+                />
+              </div>
+              <div class="flex flex-col items-start gap-1">
+                <span
+                  class="text-evergreen-primary text-base lg:text-lg font-bold"
+                >
+                  {location.locationName}
+                </span>
+                <span
+                  class="text-neutral-900 text-sm lg:text-base whitespace-pre-line leading-relaxed"
+                >
+                  {location.address}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Contact Form (Desktop Only) -->
+      <section
+        class="hidden lg:flex justify-center w-full lg:w-1/2 order-0 lg:order-2"
+      >
+        <div
+          class="rounded-3xl overflow-hidden border-2 border-neutral-300 p-8 w-full bg-white"
+        >
+          <div class="flex justify-center mb-8">
+            <img
+              src={getImageUrl(company.logoAlt)}
+              alt={company.companyName}
+              class="h-12 w-auto"
+            />
+          </div>
+
+          <form id="contact-form-desktop" class="space-y-4">
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                First Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                placeholder="e.g., John"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                Last Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                placeholder="e.g., Smith"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                Email <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="e.g., john.smith@email.com"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                placeholder="e.g., (401) 293-2048"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                How we can help you <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="message"
+                placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                required
+                rows="4"
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent resize-none"
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-4 rounded-full font-bold text-lg transition-colors"
+            >
+              {contactForm.submitText}
+            </button>
+          </form>
+        </div>
+      </section>
+    </section>
+  </section>
+</Layout>

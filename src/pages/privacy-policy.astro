@@ -1,0 +1,173 @@
+---
+// apps/web/src/pages/privacy-policy.astro
+import Layout from "../layouts/Layout.astro";
+import { getImageUrl, processMarkdown } from "../utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getPrivacyPolicy = async () => {
+  const res = await fetch(`${API_URL}/api/globals/privacy-policy-page?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const [siteSettings, privacyPolicy, contactPages] = await Promise.all([
+  getSiteSettings(),
+  getPrivacyPolicy(),
+  getContactPages(),
+]);
+
+const { company } = siteSettings;
+const { contactForm } = contactPages;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "Privacy Policy", url: "/privacy-policy" },
+  ];
+};
+---
+
+<Layout title="Privacy Policy | Evergreen Services" navbarBG={true}>
+  <section class="pt-28 lg:pt-32 pb-16 bg-white">
+    <div class="container mx-auto max-w-7xl px-6">
+      <div class="flex justify-around items-start gap-8">
+        <!-- Left: Privacy Policy Content -->
+        <article class="w-full lg:w-[50%]">
+          <!-- Breadcrumbs -->
+          <div class="flex items-center gap-2 text-sm text-neutral-500 mb-8">
+            {
+              generateBreadcrumbs().map((breadcrumb, index) => (
+                <span class="flex items-center gap-2">
+                  <a
+                    href={breadcrumb.url}
+                    class="hover:text-evergreen-primary transition-colors"
+                  >
+                    {breadcrumb.name}
+                  </a>
+                  {index < generateBreadcrumbs().length - 1 && (
+                    <span class="text-neutral-400">&rsaquo;</span>
+                  )}
+                </span>
+              ))
+            }
+          </div>
+
+          <!-- Title -->
+          <h1
+            class="text-4xl lg:text-5xl font-bold text-evergreen-primary mb-8"
+          >
+            {privacyPolicy.title}
+          </h1>
+
+          <!-- Privacy Policy Content -->
+          <div
+            class="privacy-content"
+            set:html={processMarkdown(privacyPolicy.content)}
+          />
+        </article>
+
+        <!-- Right: Contact Form Sidebar -->
+        <aside class="hidden lg:block lg:w-[30%] sticky top-32">
+          <div
+            class="rounded-3xl border-2 border-neutral-300 p-8 bg-white shadow-sm"
+          >
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+              <img
+                src={getImageUrl(company.logoAlt)}
+                alt={company.companyName}
+                class="h-12 w-auto"
+              />
+            </div>
+
+            <!-- Form -->
+            <form class="space-y-4 w-full">
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  First Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="firstName"
+                  placeholder="e.g., John"
+                  required
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  Last Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  placeholder="e.g., Smith"
+                  required
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  Email <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="e.g., john.smith@email.com"
+                  required
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  placeholder="e.g., (401) 293-2048"
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  How we can help you
+                </label>
+                <textarea
+                  name="message"
+                  placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                  rows="4"
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary resize-none"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-semibold text-base transition-colors"
+              >
+                {contactForm.submitText}
+              </button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Layout>

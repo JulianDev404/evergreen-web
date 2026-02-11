@@ -1,0 +1,319 @@
+---
+// apps/web/src/pages/blog/index.astro
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl, processMarkdown } from "../utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getBlogArticles = async () => {
+  const res = await fetch(
+    `${API_URL}/api/blog?where[active][equals]=true&limit=20&depth=1&sort=order`,
+  );
+  const data = await res.json();
+  return data.docs || [];
+};
+
+const [siteSettings, contactPages, articles] = await Promise.all([
+  getSiteSettings(),
+  getContactPages(),
+  getBlogArticles(),
+]);
+
+const { company } = siteSettings;
+const { location, contactForm } = contactPages;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "About Us" },
+    { name: "Blog", url: "/blog" },
+  ];
+};
+
+// Format date helper
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+---
+
+<Layout title="Blog | Evergreen Services" navbarBG={true}>
+  <section
+    class="pt-28 lg:pt-32 pb-16 bg-white flex flex-col items-center gap-12"
+  >
+    <!-- Blog Articles Section -->
+    <section
+      class="flex flex-col justify-center items-start gap-8 container mx-auto max-w-6xl px-6"
+    >
+      <!-- Breadcrumbs -->
+      <div class="flex items-center gap-2 text-sm text-neutral-secondary">
+        {
+          generateBreadcrumbs().map((breadcrumb, index) => (
+            <span class="flex items-center gap-2">
+              <a
+                href={breadcrumb.url}
+                class="hover:text-evergreen-primary transition-colors"
+              >
+                {breadcrumb.name}
+              </a>
+              {index < generateBreadcrumbs().length - 1 && (
+                <span class="">&rsaquo;</span>
+              )}
+            </span>
+          ))
+        }
+      </div>
+
+      <!-- Badge -->
+      <span
+        class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm font-bold rounded-full w-fit"
+      >
+        Our Blog
+      </span>
+
+      <!-- Articles Grid -->
+      <div class="w-full grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {
+          articles.map((article: any, index: number) => (
+            <a
+              href={`/blog/${article.slug}`}
+              class="border border-neutral-300 rounded-2xl p-6 hover:border-evergreen-primary transition-colors bg-white block"
+            >
+              <div class="flex justify-between items-start gap-4 mb-3">
+                <h2 class="text-xl font-bold text-black flex-1 max-w-xs">
+                  {article.title}
+                </h2>
+                <div class="flex-shrink-0 w-10 h-10 rounded-full bg-evergreen-900 flex items-center justify-center">
+                  <span class="text-[#11BB28] font-bold text-sm">
+                    {article.order || index + 1}
+                  </span>
+                </div>
+              </div>
+              <p
+                class="text-neutral-700 text-sm leading-relaxed"
+                set:html={article.excerpt}
+              />
+            </a>
+          ))
+        }
+      </div>
+
+      <!-- Pagination -->
+      <div class="flex items-center justify-center gap-2 w-full mt-4">
+        <button
+          class="px-4 py-2 text-neutral-600 hover:text-evergreen-primary transition-colors font-medium"
+        >
+          ‹ Back
+        </button>
+        <button
+          class="w-10 h-10 rounded-lg bg-[#A1F7AD] text-evergreen-800 font-semibold hover:bg-evergreen-600 transition-colors border border-[#0FA623]"
+        >
+          1
+        </button>
+        <button
+          class="w-10 h-10 rounded-lg bg-white border border-neutral-300 text-neutral-700 font-semibold hover:border-evergreen-primary hover:text-evergreen-primary transition-colors"
+        >
+          2
+        </button>
+        <button
+          class="w-10 h-10 rounded-lg bg-white border border-neutral-300 text-neutral-700 font-semibold hover:border-evergreen-primary hover:text-evergreen-primary transition-colors"
+        >
+          3
+        </button>
+        <button
+          class="w-10 h-10 rounded-lg bg-white border border-neutral-300 text-neutral-700 font-semibold hover:border-evergreen-primary hover:text-evergreen-primary transition-colors"
+        >
+          4
+        </button>
+        <button
+          class="px-4 py-2 text-neutral-600 hover:text-evergreen-primary transition-colors font-medium"
+        >
+          Next ›
+        </button>
+      </div>
+    </section>
+
+    <!-- Location + Form Section -->
+    <section
+      class="w-full flex justify-between items-start gap-8 max-w-6xl px-6"
+    >
+      <!-- Left: Location Section -->
+      <section class="flex flex-col justify-start items-start gap-6 w-1/2">
+        <div class="relative w-full">
+          <img
+            src={location.mapImage
+              ? getImageUrl(location.mapImage)
+              : "/assets/map-2.png"}
+            alt="Map"
+            class="w-full rounded-2xl"
+          />
+          {
+            location.pinImage && (
+              <img
+                src={getImageUrl(location.pinImage)}
+                alt="Location pin"
+                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12"
+              />
+            )
+          }
+          <div
+            class="absolute top-1/4 right-1/6 -translate-y-1/2 bg-white p-4 rounded-xl shadow-lg"
+          >
+            <div class="flex flex-col justify-center mb-4">
+              <img
+                src={getImageUrl(company.logoAlt)}
+                alt={company.companyName}
+                class="w-16 mb-2"
+              />
+              <h4 class="text-black text-sm font-bold">
+                Warwick, Rhode Island
+              </h4>
+              <p class="text-black text-xs whitespace-pre-line">
+                {location.address}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6 w-full">
+          <span
+            class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm font-bold rounded-full w-fit"
+          >
+            {location.badge}
+          </span>
+          <div class="w-full">
+            <h2 class="text-4xl text-[#11BB28] font-bold mb-4">
+              Find our headquarter
+            </h2>
+            <!-- <p
+              class="text-neutral-700 text-base mb-6"
+              set:html={processMarkdown(location.description)}
+            /> -->
+            <p class="text-neutral-700 text-base mb-6">
+              Where experience meets dependable service. Call Evergreen Plumbing
+              today or connect with us online for fast, professional plumbing
+              solutions.
+            </p>
+          </div>
+          <div>
+            <div class="flex gap-4 items-center">
+              <div class="bg-evergreen-900 p-4 rounded-xl">
+                <Icon name="map-marker" class="text-[#44EE5B]" size={32} />
+              </div>
+              <div class="flex flex-col items-start">
+                <span class="text-[#0D8C1E] text-sm font-semibold">
+                  {location.locationName}
+                </span>
+                <span class="text-neutral-900 text-sm whitespace-pre-line">
+                  {location.address}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: Contact Form -->
+      <section class="flex justify-center gap-2 w-1/2">
+        <div
+          class="rounded-3xl overflow-hidden border-2 border-neutral-400 p-6 w-full"
+        >
+          <div class="flex justify-center mb-6">
+            <img
+              src={getImageUrl(company.logoAlt)}
+              alt={company.companyName}
+              class="h-12 w-auto"
+            />
+          </div>
+
+          <form id="contact-form-desktop" class="space-y-4 p-6">
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                First Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                placeholder="e.g., John"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                Last Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                placeholder="e.g., Smith"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                Email <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="e.g., john.smith@email.com"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                placeholder="e.g., (401) 293-2048"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block">
+                How we can help you <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="message"
+                placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                required
+                rows="4"
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-400 text-black placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
+            >
+              {contactForm.submitText}
+            </button>
+          </form>
+        </div>
+      </section>
+    </section>
+  </section>
+</Layout>

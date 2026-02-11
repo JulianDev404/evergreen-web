@@ -1,0 +1,246 @@
+---
+// apps/web/src/pages/blog/[slug].astro
+import Layout from "../../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl, processMarkdown } from "../../utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+const { slug } = Astro.params;
+
+const getArticle = async (articleSlug: string) => {
+  const res = await fetch(
+    `${API_URL}/api/blog?where[slug][equals]=${articleSlug}&depth=2`,
+  );
+  const data = await res.json();
+  return data.docs?.[0] || null;
+};
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const [article, siteSettings, contactPages] = await Promise.all([
+  getArticle(slug || ""),
+  getSiteSettings(),
+  getContactPages(),
+]);
+
+if (!article) {
+  return Astro.redirect("/blog");
+}
+
+const { company } = siteSettings;
+const { contactForm } = contactPages;
+
+// Format date
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
+
+// Get related articles
+const previousArticle = article.relatedArticles?.find(
+  (rel: any) => rel.type === "previous",
+)?.article;
+const nextArticle = article.relatedArticles?.find(
+  (rel: any) => rel.type === "next",
+)?.article;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "About Us" },
+    { name: "Blog", url: "/blog" },
+    { name: article.badge || article.title, url: `/blog/${article.slug}` },
+  ];
+};
+---
+
+<Layout title={`${article.title} | Evergreen Services`} navbarBG={true}>
+  <section class="pt-28 lg:pt-32 pb-16 bg-white">
+    <div class="container mx-auto max-w-6xl px-6">
+      <div class="flex justify-between items-start gap-8">
+        <!-- Left: Article Content -->
+        <article class="w-full max-w-xl flex flex-col gap-4">
+          <!-- Breadcrumbs -->
+          <div class="flex items-center gap-2 text-sm text-neutral-500 mb-6">
+            {
+              generateBreadcrumbs().map((breadcrumb, index) => (
+                <span class="flex items-center gap-2">
+                  <a
+                    href={breadcrumb.url}
+                    class="hover:text-evergreen-primary transition-colors"
+                  >
+                    {breadcrumb.name}
+                  </a>
+                  {index < generateBreadcrumbs().length - 1 && (
+                    <span class="text-neutral-400">&rsaquo;</span>
+                  )}
+                </span>
+              ))
+            }
+          </div>
+
+          <!-- Badge -->
+          <span
+            class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm font-bold rounded-full w-fit"
+          >
+            {article.badge}
+          </span>
+
+          <!-- Title -->
+          <h1
+            class="text-4xl lg:text-5xl font-bold text-evergreen-700 leading-tight"
+          >
+            {article.title}
+          </h1>
+
+          <!-- Meta Info -->
+          <div class="flex items-center gap-6 text-neutral-600 text-sm">
+            <div class="flex items-center gap-2">
+              <Icon name="users" size={18} />
+              <span>{article.author}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <Icon name="calendar" size={18} />
+              <span>Published on {article.publishedDate}</span>
+            </div>
+          </div>
+
+          <!-- Article Content -->
+          <div
+            class="prose prose-lg max-w-none
+                   prose-headings:text-evergreen-700 prose-headings:font-bold
+                   prose-h2:text-3xl prose-h2:mt-8 prose-h2:mb-4
+                   prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3
+                   prose-p:text-neutral-700 prose-p:leading-relaxed prose-p:mb-4
+                   prose-strong:text-evergreen-primary prose-strong:font-semibold
+                   prose-a:text-evergreen-primary prose-a:font-semibold prose-a:no-underline hover:prose-a:underline"
+            set:html={processMarkdown(article.content)}
+          />
+
+          <!-- Navigation -->
+          {
+            article.nextArticle && (
+              <div class="mt-12 flex flex-col gap-2 text-[#999999]">
+                <a
+                  href={`/blog/${article.nextArticle.slug}`}
+                  class="inline-flex items-center gap-2 text-lg font-bold"
+                >
+                  <div class="flex items-center gap-2 border border-[#999999] px-4 py-2 rounded-full">
+                    <span class="">&lsaquo;</span>
+                    <span class="">Previous</span>
+                  </div>
+                </a>
+                <span class="text-lg font-semibold group-hover:translate-x-1 transition-transform">
+                  {article.nextArticle.title}
+                </span>
+              </div>
+            )
+          }
+        </article>
+
+        <!-- Right: Contact Form Sidebar -->
+        <aside class="hidden lg:block w-1/3 sticky top-32">
+          <div
+            class="rounded-3xl border-2 border-neutral-300 p-8 bg-white shadow-sm"
+          >
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+              <img
+                src={getImageUrl(company.logoAlt)}
+                alt={company.companyName}
+                class="h-12 w-auto"
+              />
+            </div>
+
+            <!-- Form -->
+            <form class="space-y-4">
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  First Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="firstName"
+                  placeholder="e.g., John"
+                  required
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  Last Name <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  placeholder="e.g., Smith"
+                  required
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  Email <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="e.g., john.smith@email.com"
+                  required
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  placeholder="e.g., (401) 293-2048"
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                />
+              </div>
+
+              <div>
+                <label class="text-black text-sm font-medium mb-2 block">
+                  How we can help you
+                </label>
+                <textarea
+                  name="message"
+                  placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                  rows="4"
+                  class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary resize-none"
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-semibold text-base transition-colors"
+              >
+                {contactForm.submitText}
+              </button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Layout>

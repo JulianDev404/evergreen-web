@@ -1,0 +1,655 @@
+---
+// apps/web/src/pages/offers/[slug].astro
+import Layout from "../../layouts/Layout.astro";
+import Promise from "@/components/services/Promise.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl } from "../../utils/payload";
+import imageds from "../../assets/plan-2.jpg";
+// Imagen por defecto para el hero
+import defaultHeroImage from "../../assets/plan-2.jpg";
+
+const { slug } = Astro.params;
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+// Obtener la página de ofertas
+const pageRes = await fetch(
+  `${API_URL}/api/offer-pages?where[slug][equals]=${slug}&depth=3`,
+);
+const pageData = await pageRes.json();
+const page = pageData.docs[0];
+
+if (!page) {
+  return Astro.redirect("/404");
+}
+
+const { heroSection, offersSection, promiseSection } = page;
+const offers = offersSection?.offers || [];
+
+// Función helper para limpiar teléfonos
+const cleanPhone = (phone: string) => phone?.replace(/\D/g, "") || "";
+
+export async function getStaticPaths() {
+  const API_URL = import.meta.env.PUBLIC_API_URL;
+  const res = await fetch(`${API_URL}/api/offer-pages?limit=100`);
+  const data = await res.json();
+
+  return data.docs.map((page: any) => ({
+    params: { slug: page.slug },
+  }));
+}
+const heroImageUrl = heroSection?.backgroundImage
+  ? getImageUrl(heroSection.backgroundImage)
+  : defaultHeroImage.src;
+---
+
+<Layout title={`${page.title} | Evergreen Services`} navbarBG={true}>
+  {
+    heroSection?.enabled && (
+      <section class="bg-white">
+        <section class="lg:h-96 py-52 mt-20 w-full relative">
+          <div class="absolute inset-0 z-0">
+            <img
+              src={heroImageUrl}
+              alt="Offers background"
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-black/60" />
+          </div>
+
+          <div class="relative z-10 h-full flex flex-col justify-center items-center px-4 gap-6">
+            {heroSection.breadcrumbs && heroSection.breadcrumbs.length > 0 && (
+              <nav
+                aria-label="Breadcrumb"
+                class="flex items-center gap-2 text-sm text-white"
+              >
+                {heroSection.breadcrumbs.map((breadcrumb, index) => (
+                  <span class="flex items-center gap-2">
+                    {breadcrumb.url ? (
+                      <a
+                        href={breadcrumb.url}
+                        class="hover:text-evergreen-primary transition-colors"
+                      >
+                        {breadcrumb.label}
+                      </a>
+                    ) : (
+                      <span class="opacity-90">{breadcrumb.label}</span>
+                    )}
+                    {index < heroSection.breadcrumbs.length - 1 && (
+                      <span class="text-white/60">&rsaquo;</span>
+                    )}
+                  </span>
+                ))}
+              </nav>
+            )}
+
+            <h1 class="text-white text-3xl lg:text-4xl xl:text-5xl font-bold text-center max-w-4xl leading-tight">
+              {heroSection.heading}
+            </h1>
+
+            <a
+              href={heroSection.ctaLink}
+              class="bg-evergreen-primary hover:bg-evergreen-600 text-white px-6 lg:px-8 py-3 lg:py-3.5 rounded-full font-bold text-base lg:text-lg transition-colors shadow-lg"
+            >
+              {heroSection.ctaText}
+            </a>
+          </div>
+        </section>
+      </section>
+    )
+  }
+
+  {
+    offersSection?.enabled && offers.length > 0 && (
+      <section id="offers" class="bg-black py-12 lg:py-16">
+        <div class="container mx-auto px-6 lg:px-16 mb-8 lg:mb-12">
+          <h2 class="text-white text-2xl lg:text-4xl font-bold text-center">
+            {offersSection.heading}
+          </h2>
+        </div>
+
+        <div class="hidden lg:block container mx-auto px-16 mb-12">
+          <div class="relative max-w-7xl mx-auto">
+            <button
+              id="desktop-prev"
+              class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 text-[#B3B3B3] hover:text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
+              aria-label="Previous offers"
+            >
+              <Icon name="chevron-left" size={24} />
+            </button>
+
+            <div
+              id="desktop-offers-container"
+              class="flex justify-center gap-8 mb-8"
+            >
+              {offers.slice(0, 2).map((offer, index) => (
+                <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg">
+                  <div class="relative h-80">
+                    <img
+                      src={getImageUrl(offer.image.url)}
+                      alt={offer.imageAlt || offer.title}
+                      class="w-full h-full object-cover"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                    <div class="absolute top-4 right-4 bg-neutral-900 rounded-full px-5 py-3 flex items-center gap-2 shadow-lg">
+                      {offer.originalPrice && (
+                        <span class="text-sm text-neutral-400 line-through">
+                          ${offer.originalPrice}
+                        </span>
+                      )}
+                      <span class="text-[#44EE5B] text-3xl font-bold">
+                        ${offer.price}
+                      </span>
+                      {offer.monthlyPayment && (
+                        <span class="text-sm text-neutral-300">Value</span>
+                      )}
+                    </div>
+
+                    <div class="absolute bottom-4 left-6">
+                      <h3 class="text-white text-2xl font-bold drop-shadow-lg">
+                        {offer.category}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div class="p-6">
+                    <h4 class="text-black text-2xl font-bold mb-4 leading-tight">
+                      {offer.title}
+                    </h4>
+
+                    <div class="mb-6">
+                      <h5 class="text-evergreen-primary text-sm font-bold uppercase mb-1">
+                        {offer.featuresTitle}
+                      </h5>
+                      <p class="text-neutral-600 text-sm mb-4">
+                        {offer.featuresSubtitle}
+                      </p>
+
+                      <ul class="space-y-2.5">
+                        {offer.features?.slice(0, 4).map((feature) => (
+                          <li class="flex items-start gap-2.5">
+                            <div class="mt-0.5">
+                              {/* <Icon
+                                name="check-circle"
+                                size={18}
+                                class="text-evergreen-primary"
+                              /> */}
+                            </div>
+                            <span class="text-neutral-700 text-sm font-semibold leading-relaxed">
+                              {feature.title}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {offer.features && offer.features.length > 4 && (
+                        <button
+                          data-modal-trigger={`modal-${index}`}
+                          class="text-evergreen-primary text-sm font-bold mt-2 hover:underline"
+                        >
+                          ...more
+                        </button>
+                      )}
+                    </div>
+
+                    <a
+                      href={
+                        offer.ctaLink || `tel:${cleanPhone(offer.ctaPhone)}`
+                      }
+                      class="block w-fit bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3.5 px-16 rounded-full transition-colors text-center text-base shadow-lg uppercase tracking-wide"
+                    >
+                      {offer.ctaText} {offer.ctaPhone}
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              id="desktop-next"
+              class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 text-[#B3B3B3] hover:text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-colors z-10"
+              aria-label="Next offers"
+            >
+              <Icon name="chevron-right" size={24} />
+            </button>
+          </div>
+
+          <div class="flex justify-center gap-2 mt-8">
+            {Array.from({ length: Math.ceil(offers.length / 2) }).map(
+              (_, index) => (
+                <button
+                  class={`desktop-carousel-dot w-2.5 h-2.5 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+                  data-index={index}
+                  aria-label={`Go to page ${index + 1}`}
+                />
+              ),
+            )}
+          </div>
+        </div>
+
+        <div class="lg:hidden">
+          <div class="offers-carousel-container overflow-hidden">
+            <div class="offers-carousel-track flex transition-transform duration-300 ease-in-out">
+              {offers.map((offer, index) => (
+                <div class="offers-carousel-slide w-full flex-shrink-0 px-4 py-6">
+                  <div class="bg-white rounded-2xl overflow-hidden shadow-lg mx-auto max-w-sm">
+                    <div class="relative h-[400px]">
+                      <img
+                        src={getImageUrl(offer.image.url)}
+                        alt={offer.imageAlt || offer.title}
+                        class="w-full h-full object-cover"
+                      />
+                      <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                      <div class="absolute top-3 right-3 bg-neutral-900 text-white px-4 py-2 rounded-full shadow-lg">
+                        <span class="text-[#44EE5B] text-2xl font-bold">
+                          ${offer.price}
+                        </span>
+                      </div>
+
+                      <div class="absolute bottom-3 left-4">
+                        <span class="text-white text-base font-bold drop-shadow-lg">
+                          {offer.category}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="p-5">
+                      <h3 class="text-black text-lg font-bold mb-1 leading-tight">
+                        {offer.title}
+                      </h3>
+
+                      <div class="mb-5">
+                        <h4 class="text-evergreen-primary text-xs font-bold uppercase mb-1">
+                          {offer.featuresTitle}
+                        </h4>
+                        <p class="text-neutral-500 text-xs mb-3">
+                          {offer.featuresSubtitle}
+                        </p>
+
+                        <ul class="space-y-2">
+                          {offer.features?.slice(0, 3).map((feature) => (
+                            <li class="flex items-start gap-2">
+                              <div class="mt-0.5">
+                                <Icon
+                                  name="check-circle"
+                                  size={16}
+                                  class="text-evergreen-primary"
+                                />
+                              </div>
+                              <span class="text-neutral-700 text-sm leading-relaxed font-medium">
+                                {feature.title}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {offer.features && offer.features.length > 3 && (
+                          <button
+                            data-modal-trigger={`modal-${index}`}
+                            class="text-evergreen-primary text-sm font-semibold mt-2 hover:underline"
+                          >
+                            ...more
+                          </button>
+                        )}
+                      </div>
+
+                      <a
+                        href={
+                          offer.ctaPhone
+                            ? `tel:${cleanPhone(offer.ctaPhone)}`
+                            : offer.ctaLink || "#"
+                        }
+                        class="block w-fit bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 px-12 rounded-full transition-colors text-center text-sm shadow-lg uppercase tracking-wide"
+                      >
+                        {offer.ctaPhone
+                          ? `CALL NOW ${offer.ctaPhone}`
+                          : offer.ctaText}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {offers.length > 1 && (
+            <div class="flex justify-center gap-2 mt-2 mb-6">
+              {offers.map((_, index) => (
+                <button
+                  type="button"
+                  class={`offers-carousel-dot w-2.5 h-2.5 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+                  data-index={index}
+                  aria-label={`Go to offer ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {offersSection.disclaimer && (
+            <div class="px-6 pb-8">
+              <p class="text-neutral-400 text-xs text-center leading-relaxed italic">
+                {offersSection.disclaimer}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {offersSection.disclaimer && (
+          <div class="hidden lg:block container mx-auto px-6 lg:px-16 mt-8">
+            <p class="text-white text-xs lg:text-sm text-center leading-relaxed italic">
+              {offersSection.disclaimer}
+            </p>
+          </div>
+        )}
+      </section>
+    )
+  }
+
+  {promiseSection?.enabled && <Promise promiseSection={promiseSection} />}
+
+  {
+    offers.map((offer, index) => (
+      <div
+        id={`modal-${index}`}
+        class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
+        data-modal
+      >
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
+          <button
+            data-modal-close
+            class="absolute top-4 right-4 z-10 bg-black text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-neutral-800 transition-colors"
+          >
+            <Icon name="close" size={15} />
+          </button>
+
+          <div class="overflow-y-auto max-h-[90vh]">
+            <div class="relative h-48 lg:h-72">
+              <img
+                src={getImageUrl(offer.image.url)}
+                alt={offer.imageAlt || offer.title}
+                class="w-full h-full object-cover"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+              <div class="absolute top-4 left-4 lg:top-6 lg:left-6 bg-neutral-900 rounded-full px-4 py-2 lg:px-5 lg:py-3 flex justify-center items-center gap-2">
+                {offer.originalPrice && (
+                  <span class="text-xs lg:text-sm text-neutral-400 line-through">
+                    ${offer.originalPrice}
+                  </span>
+                )}
+                <span class="text-[#44EE5B] text-2xl lg:text-4xl font-bold">
+                  ${offer.price}
+                </span>
+              </div>
+
+              <div class="absolute bottom-4 left-4 lg:bottom-6 lg:left-6">
+                <span class="text-white text-xl lg:text-3xl font-bold drop-shadow-lg">
+                  {offer.category}
+                </span>
+              </div>
+            </div>
+
+            <div class="p-6 lg:p-10">
+              <h3 class="text-black text-xl lg:text-3xl font-bold mb-2 lg:mb-3 leading-tight">
+                {offer.title}
+              </h3>
+
+              <div class="mb-6 lg:mb-8">
+                <h4 class="text-evergreen-primary text-sm lg:text-base font-bold uppercase mb-1 lg:mb-2">
+                  {offer.featuresTitle}
+                </h4>
+                <p class="text-neutral-600 text-xs lg:text-sm mb-4 lg:mb-6">
+                  {offer.featuresSubtitle}
+                </p>
+
+                <ul class="space-y-3 lg:space-y-4">
+                  {offer.features?.map((feature) => (
+                    <li class="flex items-start gap-2 lg:gap-3">
+                      <div class="mt-0.5">
+                        <Icon
+                          name="check-circle"
+                          size={18}
+                          class="text-evergreen-primary"
+                        />
+                      </div>
+                      <span class="text-neutral-700 text-sm lg:text-base leading-relaxed font-bold">
+                        {feature.title}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <a
+                href={offer.ctaLink || "#"}
+                class="block w-fit bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 px-16 lg:py-4 rounded-full transition-colors text-center text-base lg:text-lg shadow-lg"
+              >
+                {offer.ctaText}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))
+  }
+</Layout>
+
+<script define:vars={{ offers, API_URL: API_URL }}>
+  let currentDesktopPage = 0;
+  const offersPerPage = 2;
+  const totalOffers = offers.length;
+  const totalPages = Math.ceil(totalOffers / offersPerPage);
+
+  const desktopPrev = document.getElementById("desktop-prev");
+  const desktopNext = document.getElementById("desktop-next");
+  const desktopDots = document.querySelectorAll(".desktop-carousel-dot");
+  const desktopContainer = document.getElementById("desktop-offers-container");
+
+  function renderDesktopOffers() {
+    if (!desktopContainer) return;
+
+    const startIndex = currentDesktopPage * offersPerPage;
+    const endIndex = Math.min(startIndex + offersPerPage, totalOffers);
+    const currentOffers = offers.slice(startIndex, endIndex);
+
+    // Limpiar contenedor
+    desktopContainer.innerHTML = "";
+
+    // Renderizar las ofertas actuales
+    currentOffers.forEach((offer, relativeIndex) => {
+      const globalIndex = startIndex + relativeIndex;
+
+      const card = document.createElement("div");
+      card.className =
+        "bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg";
+      card.innerHTML = `
+        <div class="relative h-80">
+          <img
+            src="${API_URL + offer.image?.url}"
+            alt="${offer.title}"
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+
+          <div class="absolute top-4 right-4 bg-neutral-900 rounded-full px-5 py-3 flex items-center gap-2 shadow-lg">
+            ${offer.originalPrice ? `<span class="text-sm text-neutral-400 line-through">$${offer.originalPrice}</span>` : ""}
+            <span class="text-[#44EE5B] text-3xl font-bold">$${offer.price}</span>
+            ${offer.monthlyPayment ? '<span class="text-[#44EE5B] text-3xl font-bold">Value</span>' : ""}
+          </div>
+
+          <div class="absolute bottom-4 left-6">
+            <h3 class="text-white text-2xl font-bold drop-shadow-lg">${offer.category}</h3>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <h4 class="text-black text-2xl font-bold mb-4 leading-tight">${offer.title}</h4>
+
+          <div class="mb-6">
+            <h5 class="text-evergreen-primary text-sm font-bold uppercase mb-1">${offer.featuresTitle}</h5>
+            <p class="text-neutral-600 text-sm mb-4">${offer.featuresSubtitle}</p>
+
+            <ul class="space-y-2.5">
+              ${offer.features
+                ?.slice(0, 4)
+                .map(
+                  (feature) => `
+                <li class="flex items-start gap-2.5">
+                  <div class="flex-shrink-0 mt-0.5">
+                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20ZM10 18C12.2333 18 14.125 17.225 15.675 15.675C17.225 14.125 18 12.2333 18 10C18 7.76667 17.225 5.875 15.675 4.325C14.125 2.775 12.2333 2 10 2C7.76667 2 5.875 2.775 4.325 4.325C2.775 5.875 2 7.76667 2 10C2 12.2333 2.775 14.125 4.325 15.675C5.875 17.225 7.76667 18 10 18Z" fill="#0FA623"/>
+                    </svg>
+                  </div>
+                  <span class="text-neutral-700 text-sm font-semibold leading-relaxed">${feature.title || feature.text}</span>
+                </li>
+              `,
+                )
+                .join("")}
+            </ul>
+
+            ${
+              offer.features && offer.features.length > 4
+                ? `
+              <button
+                data-modal-trigger="modal-${globalIndex}"
+                class="text-evergreen-primary text-sm font-bold mt-2 hover:underline"
+              >
+                ...more
+              </button>
+            `
+                : ""
+            }
+          </div>
+
+          <a
+            href="${offer.ctaLink || `tel:${offer.ctaPhone?.replace(/\D/g, "") || ""}`}"
+            class="block w-fit bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3.5 px-16 rounded-full transition-colors text-center text-base shadow-lg uppercase tracking-wide"
+          >
+            ${offer.ctaText} ${offer.ctaPhone || ""}
+          </a>
+        </div>
+      `;
+
+      desktopContainer.appendChild(card);
+    });
+
+    // Re-attach modal triggers
+    attachModalTriggers();
+  }
+
+  function updateDesktopCarousel() {
+    // Renderizar nuevas ofertas
+    renderDesktopOffers();
+
+    // Actualizar dots
+    desktopDots.forEach((dot, index) => {
+      dot.classList.toggle(
+        "bg-evergreen-primary",
+        index === currentDesktopPage,
+      );
+      dot.classList.toggle("bg-neutral-600", index !== currentDesktopPage);
+    });
+
+    // Habilitar/deshabilitar botones
+    if (desktopPrev) {
+      desktopPrev.disabled = currentDesktopPage === 0;
+      desktopPrev.style.opacity = currentDesktopPage === 0 ? "0.5" : "1";
+      desktopPrev.style.cursor =
+        currentDesktopPage === 0 ? "not-allowed" : "pointer";
+    }
+    if (desktopNext) {
+      desktopNext.disabled = currentDesktopPage === totalPages - 1;
+      desktopNext.style.opacity =
+        currentDesktopPage === totalPages - 1 ? "0.5" : "1";
+      desktopNext.style.cursor =
+        currentDesktopPage === totalPages - 1 ? "not-allowed" : "pointer";
+    }
+  }
+
+  desktopPrev?.addEventListener("click", () => {
+    if (currentDesktopPage > 0) {
+      currentDesktopPage--;
+      updateDesktopCarousel();
+    }
+  });
+
+  desktopNext?.addEventListener("click", () => {
+    if (currentDesktopPage < totalPages - 1) {
+      currentDesktopPage++;
+      updateDesktopCarousel();
+    }
+  });
+
+  desktopDots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      currentDesktopPage = index;
+      updateDesktopCarousel();
+    });
+  });
+
+  // Mobile carousel
+  let currentMobileSlide = 0;
+  const mobileDots = document.querySelectorAll(".offers-carousel-dot");
+  const mobileTrack = document.querySelector(".offers-carousel-track");
+
+  function updateMobileCarousel() {
+    if (mobileTrack) {
+      mobileTrack.style.transform = `translateX(-${currentMobileSlide * 100}%)`;
+    }
+    mobileDots.forEach((dot, index) => {
+      dot.classList.toggle(
+        "bg-evergreen-primary",
+        index === currentMobileSlide,
+      );
+      dot.classList.toggle("bg-neutral-600", index !== currentMobileSlide);
+    });
+  }
+
+  mobileDots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      currentMobileSlide = index;
+      updateMobileCarousel();
+    });
+  });
+
+  // Modal functionality
+  function attachModalTriggers() {
+    const modalTriggers = document.querySelectorAll("[data-modal-trigger]");
+    modalTriggers.forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const modalId = trigger.getAttribute("data-modal-trigger");
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+        }
+      });
+    });
+  }
+
+  const modals = document.querySelectorAll("[data-modal]");
+  const modalCloses = document.querySelectorAll("[data-modal-close]");
+
+  modalCloses.forEach((close) => {
+    close.addEventListener("click", () => {
+      const modal = close.closest("[data-modal]");
+      if (modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    });
+  });
+
+  modals.forEach((modal) => {
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      }
+    });
+  });
+
+  // Initialize
+  attachModalTriggers();
+  updateDesktopCarousel();
+</script>

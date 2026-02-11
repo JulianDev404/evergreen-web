@@ -1,0 +1,197 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface ServiceItem {
+  name: string;
+  href?: string;
+}
+
+interface ServiceCategory {
+  name: string;
+  icon?: string;
+  services: ServiceItem[];
+}
+
+interface Props {
+  relatedServicesSection?: {
+    enabled?: boolean;
+    heading?: string;
+    services?: ServiceItem[]; // Flat list for desktop grid
+    categories?: ServiceCategory[]; // Grouped structure for mobile accordions
+  };
+}
+
+const { relatedServicesSection } = Astro.props;
+
+// Valores por defecto
+const showSection =
+  !relatedServicesSection || relatedServicesSection.enabled !== false;
+const heading = relatedServicesSection?.heading || "Related Plumbing Services";
+
+// Flat services for desktop
+const services = relatedServicesSection?.services || [];
+
+// Categories for mobile accordions
+const categories = relatedServicesSection?.categories || [];
+
+// Default categories for mobile if none provided
+const defaultCategories: ServiceCategory[] = [
+  {
+    name: "General Plumbing",
+    icon: "wrench-2",
+    services: [
+      { name: "Plumbing Repair", href: "/services/plumbing-repair" },
+      { name: "Home Repiping", href: "/services/home-repiping" },
+      { name: "Plumbing Inspection", href: "/services/plumbing-inspection" },
+      {
+        name: "Frozen/Burst Pipe Repair",
+        href: "/services/frozen-pipe-repair",
+      },
+      { name: "Leak Detection", href: "/services/leak-detection" },
+    ],
+  },
+  {
+    name: "Water Heaters",
+    icon: "water-heater",
+    services: [
+      { name: "Water Heater Repair", href: "/services/water-heater-repair" },
+      {
+        name: "Water Heater Installation",
+        href: "/services/water-heater-installation",
+      },
+      {
+        name: "Tankless Water Heaters",
+        href: "/services/tankless-water-heaters",
+      },
+    ],
+  },
+  {
+    name: "Pump & Wells",
+    icon: "wrench",
+    services: [
+      { name: "Well Pump Repair", href: "/services/well-pump-repair" },
+      { name: "Sump Pump Services", href: "/services/sump-pump" },
+    ],
+  },
+  {
+    name: "Gas Line Services",
+    icon: "wrench",
+    services: [
+      { name: "Gas Line Repair", href: "/services/gas-line-repair" },
+      {
+        name: "Gas Line Installation",
+        href: "/services/gas-line-installation",
+      },
+    ],
+  },
+  {
+    name: "Kitchen Plumbing",
+    icon: "wrench",
+    services: [
+      { name: "Kitchen Sink Repair", href: "/services/kitchen-sink-repair" },
+      { name: "Garbage Disposal", href: "/services/garbage-disposal" },
+      {
+        name: "Dishwasher Installation",
+        href: "/services/dishwasher-installation",
+      },
+    ],
+  },
+  {
+    name: "Other",
+    icon: "wrench",
+    services: [
+      { name: "Bathroom Plumbing", href: "/services/bathroom-plumbing" },
+      { name: "Drain Cleaning", href: "/services/drain-cleaning" },
+    ],
+  },
+];
+
+// Use provided categories or defaults for mobile
+const mobileCategories: ServiceCategory[] =
+  categories.length > 0 ? categories : defaultCategories;
+
+// No mostrar si está deshabilitado o no hay servicios ni categorías
+if (!showSection || (services.length === 0 && mobileCategories.length === 0)) {
+  return null;
+}
+
+// Icon mapping for mobile
+const iconMap: Record<string, string> = {
+  "wrench-2": "wrench-2",
+  "water-heater": "water-heater",
+  pump: "pump",
+  gas: "gas-line",
+  kitchen: "kitchen",
+  more: "more-horizontal",
+  default: "wrench-2",
+};
+---
+
+<section class="bg-black py-12 lg:pb-16">
+  <div class="container mx-auto px-6 lg:px-16">
+    <!-- Heading -->
+    <h2
+      class="text-white text-2xl lg:text-4xl font-bold text-center mb-8 lg:mb-12"
+    >
+      {heading}
+    </h2>
+
+    <!-- Mobile: Accordion layout -->
+    <div class="lg:hidden flex flex-col gap-3 max-w-lg mx-auto">
+      {
+        mobileCategories.map((category, index) => (
+          <details
+            class="group bg-evergreen-950 rounded-xl border border-evergreen-800 overflow-hidden"
+            open={index === 0}
+          >
+            <summary class="flex items-center justify-between p-4 cursor-pointer list-none">
+              <div class="flex items-center gap-3">
+                <Icon
+                  name={iconMap[category.icon || "default"] || "wrench-2"}
+                  size={20}
+                  class="text-white"
+                />
+                <span class="text-white text-base font-semibold">
+                  {category.name}
+                </span>
+              </div>
+              <Icon
+                name="arrow-down"
+                size={20}
+                class="text-white transition-transform group-open:rotate-180"
+              />
+            </summary>
+            <div class="px-4 pb-4 flex flex-col gap-2">
+              {category.services.map((service) => (
+                <a
+                  href={service.href || "#"}
+                  class="block bg-[#085E14] hover:bg-evergreen-700/50 rounded-lg px-4 py-3 transition-colors"
+                >
+                  <span class="text-neutral-200 text-sm">{service.name}</span>
+                </a>
+              ))}
+            </div>
+          </details>
+        ))
+      }
+    </div>
+
+    <!-- Desktop: Original Grid layout -->
+    {
+      services.length > 0 && (
+        <div class="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-7xl mx-auto">
+          {services.map((service) => (
+            <a
+              href={service.href || "#"}
+              class="group bg-evergreen-950 border-2 border-evergreen-800 hover:bg-evergreen-primary/10 rounded-lg p-2 transition-all"
+            >
+              <span class="text-neutral-200 text-base font-normal group-hover:text-evergreen-primary transition-colors">
+                {service.name}
+              </span>
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</section>

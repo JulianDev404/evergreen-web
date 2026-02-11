@@ -1,0 +1,432 @@
+---
+// apps/web/src/components/home/ChooseYourPlan.astro
+import { Icon } from "astro-icon/components";
+import { processMarkdown, getImageUrl } from '../../utils/payload';
+import DynamicIcon from "../DynamicIcon.astro";
+
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+if (!data?.enabled) {
+  return null;
+}
+
+const { header, plans, contactForm, disclaimer } = data;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+
+const siteSettings = await getSiteSettings();
+
+const { company, contact } = siteSettings;
+const recaptchaSiteKey = import.meta.env.PUBLIC_RECAPTCHA_SITE_KEY;
+---
+
+<section class="bg-black relative">
+  <div class="mx-auto px-8">
+    <!-- Header Section -->
+    <div class="mb-4 lg:px-16 text-center lg:text-left text-white">
+      <h2 
+        class="text-3xl lg:text-5xl font-bold"
+        set:html={processMarkdown(header.title)}
+      />
+      <p class="text-white text-base lg:text-lg">
+        {header.subtitle}
+        <a 
+          href={header.callToActionLink} 
+          class="underline hover:text-evergreen-primary transition-colors"
+        >
+          {header.callToActionText}
+        </a>
+      </p>
+    </div>
+
+    <!-- Desktop Version - 3 Columns -->
+    <div class="hidden lg:grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Plan Cards -->
+      {plans.map((plan: any) => (
+        <div class="bg-white rounded-3xl overflow-hidden">
+          <!-- Image Header -->
+          <div class="relative h-72">
+            <img
+              src={getImageUrl(plan.image)}
+              alt={plan.title}
+              class="w-full h-full object-cover"
+            />
+            <div class="absolute inset-0 bg-black/40 flex items-end p-6">
+              <h3 class="text-white text-3xl font-bold">{plan.title}</h3>
+            </div>
+          </div>
+
+          <!-- Content -->
+          <div class="p-6 space-y-4">
+            <!-- Badge -->
+            {plan.badge && (
+              <div class="inline-block bg-evergreen-primary text-white px-4 py-2 rounded-full font-bold text-sm">
+                {plan.badge}
+              </div>
+            )}
+
+            <!-- Heading -->
+            <h4 class="text-2xl text-neutral-800">
+              {plan.heading}
+            </h4>
+
+            <!-- Description -->
+            <p class="text-neutral-600 text-lg" set:html={plan.description} />
+
+            <!-- Features Title -->
+            <div class="flex flex-col">
+              <h5 class="text-evergreen-primary font-bold text-lg uppercase">
+              {plan.featuresTitle}
+            </h5>
+            <p class="text-neutral-600 text-lg">
+              {plan.featuresSubtitle}
+            </p>
+            </div>
+
+            <!-- Features List -->
+            <ul class="space-y-3">
+              {plan.features.map((feature: any) => (
+                <li class="flex items-start gap-3">
+                  <div class="text-evergreen-primary flex-shrink-0">
+                    <Icon name="check-circle" size="20"/>                        
+                  </div>
+                  <span class="text-neutral-700 text-lg">
+                    {feature.title}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <!-- CTA Button -->
+            {plan.ctaButton?.enabled && (
+              <a
+                href={plan.ctaButton.link}
+                class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors text-center"
+              >
+                {plan.ctaButton.text.replace('CALL NOW', `CALL NOW ${contact.phone}`)}
+              </a>
+            )}
+          </div>
+        </div>
+      ))}
+
+      <!-- Contact Form Card -->
+      {contactForm?.enabled && (
+        <div class="rounded-3xl overflow-hidden border-2 border-evergreen-primary p-6">
+          <!-- Logo -->
+          <div class="flex justify-center mb-6">
+            <img
+              src={getImageUrl(company.logo)}
+              alt={company.name}
+              class="h-12 w-auto"
+            />
+          </div>
+
+          <!-- Form -->
+          <form id="contact-form-desktop" class="space-y-4 p-6">
+            {contactForm.fields?.map((field: any) => (
+              <div>
+                <label class="text-white text-sm mb-2 block">
+                  {field.label}
+                  {field.required && <span class="text-red-500">*</span>}
+                </label>
+                {field.type === 'textarea' ? (
+                  <textarea
+                    name={field.name}
+                    placeholder={field.placeholder}
+                    required={field.required}
+                    rows="4"
+                    class="w-full px-4 py-3 rounded-lg bg-black border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-evergreen-primary resize-none"
+                  />
+                ) : (
+                  <input
+                    type={field.type}
+                    name={field.name}
+                    placeholder={field.placeholder}
+                    required={field.required}
+                    class="w-full px-4 py-3 rounded-lg bg-black border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                  />
+                )}
+              </div>
+            ))}
+
+            <!-- reCAPTCHA v2 -->
+            {/* {contactForm.showRecaptcha && (
+              <div class="flex justify-center my-4">
+                <div 
+                  class="g-recaptcha" 
+                  data-sitekey={recaptchaSiteKey}
+                  data-theme="dark"
+                />
+              </div>
+            )} */}
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
+            >
+              {contactForm.submitButtonText}
+            </button>
+          </form>
+        </div>
+      )}
+      
+    </div>
+
+    <!-- Disclaimer Text -->
+      {disclaimer?.enabled && (
+        <div class="lg:flex flex-col items-start w-1/2 py-12 px-6 hidden ">
+          <h4 class="text-white text-xl font-bold">
+         Disclaimer <span class="text-evergreen-primary">*</span>
+        </h4>
+        <p class="text-white text-lg">
+          {disclaimer.text}
+        </p>
+        </div>
+      )}
+
+    <!-- Mobile Version - Carousel -->
+    <div class="lg:hidden">
+      <!-- Plans Carousel -->
+      <div class="relative px-8 mb-8">
+        <!-- Navigation Arrows -->
+        <button
+          id="prev-plan"
+          class="absolute -left-2 top-1/2 -translate-y-1/2 bg-transparent text-white p-2 transition-colors z-20"
+          aria-label="Previous plan"
+        >
+          <Icon name="chevron-left" size={15} />
+        </button>
+        <button
+          id="next-plan"
+          class="absolute -right-2 top-1/2 -translate-y-1/2 bg-transparent text-white p-2 transition-colors z-20"
+          aria-label="Next plan"
+        >
+          <Icon name="chevron-right" size={15} />
+        </button>
+
+        <!-- Carousel Container -->
+        <div id="plans-carousel" class="relative overflow-hidden rounded-xl">
+          {plans.map((plan: any, index: number) => (
+            <div
+              class={`plan-slide ${index === 0 ? "active" : ""}`}
+              data-slide={index}
+            >
+              <div class="bg-white rounded-3xl overflow-hidden">
+                <!-- Image Header -->
+                <div class="relative h-32">
+                  <img
+                    src={getImageUrl(plan.image)}
+                    alt={plan.title}
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/40 flex items-end p-4">
+                    <h3 class="text-white text-2xl font-bold">{plan.title}</h3>
+                  </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-4 space-y-3">
+                  {plan.badge && (
+                    <div class="inline-block bg-evergreen-primary text-white px-3 py-1.5 rounded-full font-bold text-xs">
+                      {plan.badge}
+                    </div>
+                  )}
+
+                  <h4 class="text-lg font-bold text-neutral-800">
+                    {plan.heading}
+                  </h4>
+
+                  <p class="text-neutral-600 text-sm" set:html={plan.description} />
+
+                  <h5 class="text-evergreen-primary font-bold text-xs uppercase">
+                    {plan.featuresTitle}
+                  </h5>
+                  <p class="text-neutral-600 text-xs">
+                    {plan.featuresSubtitle}
+                  </p>
+
+                  <ul class="space-y-2">
+                    {plan.features.slice(0, 3).map((feature: any) => (
+                      <li class="flex items-start gap-2">
+                        <div class="text-evergreen-primary flex-shrink-0">
+                          <Icon name="check-circle" />                        
+                        </div>
+                        <span class="text-neutral-700 text-xs">
+                          {feature.title}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {plan.ctaButton?.enabled && (
+                    <a
+                      href={plan.ctaButton.link}
+                      class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-2 rounded-full font-bold text-sm transition-colors text-center"
+                    >
+                      {plan.ctaButton.text.replace('CALL NOW', `CALL NOW ${contact.phone}`)}
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- Dots Indicator -->
+      <div class="flex justify-center gap-2 mb-8">
+        {plans.map((_: any, index: number) => (
+          <button
+            class={`plan-dot w-3 h-3 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+            data-slide={index}
+            aria-label={`Go to plan ${index + 1}`}
+          />
+        ))}
+      </div>
+
+      <!-- Disclaimer Text -->
+      {disclaimer?.enabled && (
+        <p class="text-white text-xs text-center">
+          {disclaimer.text}
+        </p>
+      )}
+
+      <!-- Contact Us Title -->
+      {contactForm?.enabled && (
+        <>
+          <h3 class="text-evergreen-primary text-2xl font-bold text-center mb-4">
+            {contactForm.title}
+          </h3>
+
+          <!-- Contact Form Card -->
+          <div class="rounded-3xl overflow-hidden border-2 border-evergreen-primary p-6 mx-4">
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+              <img
+                src={getImageUrl(company.logo)}
+                alt={company.name}
+                class="h-12 w-auto"
+              />
+            </div>
+
+            <!-- Form -->
+            <form id="contact-form-mobile" class="space-y-4">
+              {contactForm.fields?.map((field: any) => (
+                <div>
+                  <label class="text-white text-sm mb-2 block">
+                    {field.label}
+                    {field.required && <span class="text-red-500">*</span>}
+                  </label>
+                  {field.type === 'textarea' ? (
+                    <textarea
+                      name={field.name}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      rows="4"
+                      class="w-full px-4 py-3 rounded-lg bg-black border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-evergreen-primary resize-none"
+                    />
+                  ) : (
+                    <input
+                      type={field.type}
+                      name={field.name}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      class="w-full px-4 py-3 rounded-lg bg-black border border-neutral-700 text-white placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+                    />
+                  )}
+                </div>
+              ))}
+
+              <!-- reCAPTCHA v2 -->
+              {/* {contactForm.showRecaptcha && (
+                <div class="flex justify-center my-4 w-full">
+                  <div 
+                    class="g-recaptcha" 
+                    data-sitekey={recaptchaSiteKey}
+                    data-theme="light"
+                    data-size="normal"
+                  />
+                </div>
+              )} */}
+
+              <button
+                type="submit"
+                class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
+              >
+                {contactForm.submitButtonText}
+              </button>
+            </form>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+</section>
+
+<style>
+  .plan-slide {
+    display: none;
+  }
+
+  .plan-slide.active {
+    display: block;
+  }
+
+  /* Personalizar reCAPTCHA para tema oscuro */
+  :global(.g-recaptcha) {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+</style>
+
+<script>
+  let currentPlan = 0;
+  const planSlides = document.querySelectorAll(".plan-slide");
+  const planDots = document.querySelectorAll(".plan-dot");
+  const totalPlans = planSlides.length;
+
+  function showPlan(index: number) {
+    planSlides.forEach((slide) => slide.classList.remove("active"));
+    planDots.forEach((dot) => {
+      dot.classList.remove("bg-evergreen-primary");
+      dot.classList.add("bg-neutral-600");
+    });
+
+    planSlides[index].classList.add("active");
+    planDots[index].classList.remove("bg-neutral-600");
+    planDots[index].classList.add("bg-evergreen-primary");
+  }
+
+  function nextPlan() {
+    currentPlan = (currentPlan + 1) % totalPlans;
+    showPlan(currentPlan);
+  }
+
+  function prevPlan() {
+    currentPlan = (currentPlan - 1 + totalPlans) % totalPlans;
+    showPlan(currentPlan);
+  }
+
+  document.getElementById("next-plan")?.addEventListener("click", nextPlan);
+  document.getElementById("prev-plan")?.addEventListener("click", prevPlan);
+
+  planDots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      currentPlan = index;
+      showPlan(currentPlan);
+    });
+  });
+</script>

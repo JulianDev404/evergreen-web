@@ -1,0 +1,503 @@
+---
+import { Icon } from "astro-icon/components";
+import { processMarkdown, getImageUrl } from "../../utils/payload";
+
+interface RepairSign {
+  title: string;
+  description: any;
+}
+
+interface Props {
+  contentSection?: {
+    phoneNumber?: string;
+    contentImage?: { url: string; alt?: string };
+    topTitle?: string;
+    cardTitle?: string;
+    cardSubtitle?: string;
+    cardDescription?: any;
+    cardCtaText?: string;
+    cardCtaLink?: string;
+    cardFooterText?: string;
+    mainTitle?: string;
+    mainContent?: any;
+    mainCtaText?: string;
+    mainCtaLink?: string;
+  };
+  repairSigns?: {
+    enabled?: boolean;
+    title?: string;
+    subtitle?: string;
+    signs?: RepairSign[];
+  };
+}
+
+const { contentSection, repairSigns } = Astro.props;
+
+// Valores por defecto
+const phoneNumber = contentSection?.phoneNumber || "(401) 305-3094";
+const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
+
+const topTitle =
+  contentSection?.topTitle || "Top-Quality Plumbing Services Near Warwick, RI";
+const cardTitle =
+  contentSection?.cardTitle ||
+  "Get the Reliable, High-Quality Service You Deserve";
+const cardSubtitle =
+  contentSection?.cardSubtitle ||
+  "Evergreen Services | Warwick, RI's Trusted Plumbing Professionals";
+const cardCtaText =
+  contentSection?.cardCtaText || "CALL NOW! REQUEST A SERVICE";
+const cardCtaLink = contentSection?.cardCtaLink || "#schedule";
+const cardFooterText =
+  contentSection?.cardFooterText ||
+  "Evergreen Services is proudly & professionally serving the greater Warwick, RI area.";
+
+const mainTitle =
+  contentSection?.mainTitle ||
+  "Experienced Plumbing Repair Services You Can Trust in the Warwick, RI Area";
+const mainCtaText = contentSection?.mainCtaText || "Schedule now";
+const mainCtaLink = contentSection?.mainCtaLink || "#schedule";
+
+// Default descriptions
+const defaultCardDescription = `We offer a full line of <strong>installation, maintenance & repair</strong> that your home's Plumbing may require, no matter the problem or time of year. You can count on the trusted professionals at Evergreen Services for exceptional service & quality craftsmanship.`;
+
+const defaultMainContent = `
+<p>If you are a homeowner in the Warwick, RI area, you know how important your plumbing is to your household ecosystem. We rely on our showers, kitchen sinks, dishwashers, showers, water heaters, and more to help aid us through our day-to-day life. Unfortunately, plumbing appliances and systems will inevitably run into issues due to wear and tear, age, and other factors. That is why Evergreen Services is here to help serve you with premiere plumbing repair services.</p>
+<p>Whatever plumbing repairs you may need, our plumbing experts are here to provide you with effective solutions. We offer a full range of plumbing repair services. Call Evergreen Services for more information on all of the Plumbing Repair Services we offer and let us help you with whatever plumbing needs your home may require!</p>
+<p>Our Warwick, RI experts specialize in all Plumbing services, so call us today or schedule service via our contact us form. No matter the request, our Warwick, RI experts are ready with a hassle-free solution with upfront pricing & customer satisfaction, guaranteed.</p>
+<p>Have a question about your Plumber? Ask an expert from Evergreen Services below for fast answers & get reliable service that your neighbors trust!</p>
+`;
+
+// Process content
+const cardDescriptionHTML = contentSection?.cardDescription
+  ? processMarkdown(contentSection.cardDescription)
+  : defaultCardDescription;
+
+const mainContentHTML = contentSection?.mainContent
+  ? processMarkdown(contentSection.mainContent)
+  : defaultMainContent;
+
+// Imagen
+import plumberImage from "../../assets/plan-1.jpg";
+const imageUrl = contentSection?.contentImage?.url
+  ? getImageUrl(contentSection.contentImage)
+  : plumberImage.src;
+const imageAlt =
+  contentSection?.contentImage?.alt || "Top-Quality Plumbing Technician";
+
+// Repair signs
+const showRepairSigns = !repairSigns || repairSigns.enabled !== false;
+const repairSignsTitle =
+  repairSigns?.title || "Signs You May Need Plumbing Repairs";
+const repairSignsSubtitle =
+  repairSigns?.subtitle ||
+  "There are several signs to keep an eye out for that indicate that your home probably needs plumbing repairs, including:";
+
+const defaultRepairSigns = [
+  {
+    title: "Slow Drains",
+    description:
+      "Slow drains are never a good sign and usually indicate some sort of a clog within your plumbing pipes. The easiest solution is to call the experts at Evergreen Services for all your Professional Expert Plumbing Repair needs. Our certified plumbers can accurately diagnose and repair any plumbing appliance in your home. To set up a Professional Expert Plumbing Repair appointment, Call (401) 305-1610 today!",
+  },
+  {
+    title: "Low Water Pressure",
+    description:
+      "Low water pressure can indicate various plumbing issues such as pipe corrosion, leaks, or mineral buildup. Our expert technicians can diagnose and resolve these issues to restore proper water flow throughout your home.",
+  },
+  {
+    title: "You Don't Have Hot Water",
+    description:
+      "If you're experiencing issues with your water heater, from complete failure to inconsistent temperatures, our plumbing professionals can quickly identify and fix the problem to ensure you have reliable hot water when you need it.",
+  },
+];
+
+const signs =
+  repairSigns?.signs && repairSigns.signs.length > 0
+    ? repairSigns.signs
+    : defaultRepairSigns;
+---
+
+<section class="relative bg-black">
+  <!-- Gradientes -->
+  <div
+    class="absolute hidden lg:block top-1/4 -right-40 w-[500px] h-[500px] translate-x-1/3 -translate-y-1/3 bg-gradient-to-br from-evergreen-primary/40 via-evergreen-primary/20 to-transparent pointer-events-none rounded-full blur-3xl"
+  >
+  </div>
+  <div
+    class="absolute hidden lg:block bottom-1/2 left-0 w-[400px] h-[400px] -translate-x-1/3 translate-y-1/3 bg-gradient-to-tr from-evergreen-primary/40 via-evergreen-primary/20 to-transparent pointer-events-none rounded-full blur-3xl"
+  >
+  </div>
+
+  <div class="relative z-10">
+    <!-- Primera sección -->
+    <div class="container mx-auto px-6 lg:px-16 pt-12 lg:py-16">
+      <!-- Mobile Header -->
+      <div class="lg:hidden mb-6">
+        <h2 class="text-white text-xl font-bold mb-3 leading-tight">
+          <Fragment
+            set:html={topTitle.replace(
+              "Warwick, RI",
+              '<span class="">Warwick, RI</span>',
+            )}
+          />
+        </h2>
+        <div class="flex items-center gap-3">
+          <div
+            class="flex items-center gap-0.5 border border-evergreen-primary rounded-full px-3 py-1"
+          >
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+          </div>
+          <a
+            href={phoneLink}
+            class="flex items-center justify-center gap-1 bg-evergreen-primary text-white font-bold px-4 py-2 rounded-full text-xs whitespace-nowrap hover:bg-evergreen-600 transition-colors"
+          >
+            CALL NOW {phoneNumber}
+          </a>
+        </div>
+      </div>
+
+      <!-- Desktop Header -->
+      <div class="hidden lg:flex justify-between items-start mb-8">
+        <div>
+          <h2
+            class="text-white text-3xl font-bold mb-2 leading-tight max-w-[80%]"
+          >
+            <Fragment
+              set:html={topTitle.replace(
+                "Warwick, RI",
+                '<span class="">Warwick, RI</span>',
+              )}
+            />
+          </h2>
+          <div
+            class="flex items-center gap-0.5 border border-evergreen-primary rounded-full px-3 w-fit py-1"
+          >
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+            <Icon name="star" size={14} class="text-evergreen-primary" />
+          </div>
+        </div>
+        <a
+          href={phoneLink}
+          class="flex items-center justify-center gap-2 bg-evergreen-primary text-white font-bold px-8 py-3 rounded-full text-sm whitespace-nowrap hover:bg-evergreen-600 transition-colors"
+        >
+          CALL NOW {phoneNumber}
+        </a>
+      </div>
+
+      <!-- Contenido principal -->
+      <div class="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+        <!-- Tarjeta blanca -->
+        <div
+          class="bg-white rounded-2xl overflow-hidden w-full lg:w-[38%] flex-shrink-0"
+        >
+          <div class="relative h-48 lg:h-72">
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="p-5 lg:p-8 flex flex-col gap-3 lg:gap-4">
+            <h3 class="text-lg lg:text-2xl font-bold leading-tight">
+              {cardTitle}
+            </h3>
+            <p class="text-neutral-600 text-xs lg:text-base font-medium">
+              {cardSubtitle}
+            </p>
+            <div
+              class="text-neutral-700 text-sm lg:text-base leading-relaxed prose prose-sm max-w-none"
+            >
+              <Fragment set:html={cardDescriptionHTML} />
+            </div>
+            <a
+              href={cardCtaLink}
+              class="flex items-center justify-center gap-2 text-white bg-evergreen-primary font-bold py-3 px-6 rounded-full transition-colors text-sm hover:bg-evergreen-600"
+            >
+              <Icon name="phone-add" size={16} />
+              {cardCtaText}
+            </a>
+            <hr class="border-neutral-200" />
+            <p class="text-neutral-500 text-xs lg:text-sm leading-relaxed">
+              {cardFooterText}
+            </p>
+          </div>
+        </div>
+
+        <!-- Contenido derecha (Desktop) / debajo (Mobile) -->
+        <div class="text-white flex flex-col gap-4 w-full lg:w-[58%]">
+          <h3 class="text-xl lg:text-3xl font-bold leading-tight">
+            {mainTitle}
+          </h3>
+
+          <!-- Mobile: Expandable content -->
+          <div class="lg:hidden">
+            <div class="service-main-content-mobile" id="mainContentMobile">
+              <Fragment set:html={mainContentHTML} />
+            </div>
+            <button
+              type="button"
+              class="flex items-center gap-1 text-evergreen-primary font-medium text-sm mt-2"
+              id="viewMoreBtn"
+            >
+              View more
+              <Icon
+                name="arrow-down"
+                size={16}
+                class="view-more-icon transition-transform"
+              />
+            </button>
+          </div>
+
+          <!-- Desktop: Full content -->
+          <div class="hidden lg:block service-main-content">
+            <Fragment set:html={mainContentHTML} />
+          </div>
+
+          <a
+            href={mainCtaLink}
+            class="text-center bg-evergreen-primary text-white font-bold py-3 px-8 rounded-full transition-colors text-sm hover:bg-evergreen-600 w-fit"
+          >
+            {mainCtaText}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acordeones -->
+    {
+      showRepairSigns && signs.length > 0 && (
+        <div class="container mx-auto px-6 lg:px-16 pb-12 pt-4 lg:py-20">
+          <div class="max-w-5xl mx-auto">
+            <div class="text-left lg:text-center mb-8 lg:mb-12">
+              <h3 class="text-5xl lg:text-4xl font-bold text-[#44EE5B] mb-2">
+                {repairSignsTitle}
+              </h3>
+              <p class="text-white text-base lg:text-2xl font-light max-w-2xl lg:mx-auto leading-relaxed">
+                {repairSignsSubtitle}
+              </p>
+            </div>
+            <div class="flex flex-col gap-3">
+              {signs.map((sign, index) => (
+                <details
+                  class="group bg-[#1A1A1A]  rounded-xl border border-neutral-800"
+                  open={index === 0}
+                >
+                  <summary class="flex items-center justify-between p-4 lg:p-5 cursor-pointer list-none">
+                    <h4 class="text-evergreen-primary text-base lg:text-xl font-semibold">
+                      {sign.title}
+                    </h4>
+                    <div class="w-8 h-8 flex items-center justify-center  rounded-md lg:bg-transparent lg:rounded-none">
+                      <Icon
+                        name="arrow-down"
+                        size={14}
+                        class="text-white lg:text-neutral-200 transition-transform group-open:rotate-180"
+                      />
+                    </div>
+                  </summary>
+                  <div class="px-4 lg:px-5 pb-4 lg:pb-5">
+                    <div class="text-white text-sm lg:text-base leading-relaxed prose prose-invert max-w-none">
+                      {typeof sign.description === "string" ? (
+                        <p>{sign.description}</p>
+                      ) : (
+                        <Fragment
+                          set:html={processMarkdown(sign.description)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const viewMoreBtn = document.getElementById("viewMoreBtn");
+    const mainContent = document.getElementById("mainContentMobile");
+    const icon = viewMoreBtn?.querySelector(".view-more-icon");
+
+    if (viewMoreBtn && mainContent) {
+      let isExpanded = false;
+
+      viewMoreBtn.addEventListener("click", () => {
+        isExpanded = !isExpanded;
+
+        if (isExpanded) {
+          mainContent.classList.remove("collapsed");
+          mainContent.classList.add("expanded");
+          viewMoreBtn.childNodes[0].textContent = "View less ";
+          icon?.classList.add("rotate-180");
+        } else {
+          mainContent.classList.remove("expanded");
+          mainContent.classList.add("collapsed");
+          viewMoreBtn.childNodes[0].textContent = "View more ";
+          icon?.classList.remove("rotate-180");
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Mobile content - collapsed by default */
+  .service-main-content-mobile {
+    color: #e5e5e5;
+    font-size: 0.875rem;
+    line-height: 1.75;
+    max-height: 180px;
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.3s ease;
+  }
+
+  .service-main-content-mobile::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, black);
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .service-main-content-mobile.expanded {
+    max-height: 2000px;
+  }
+
+  .service-main-content-mobile.expanded::after {
+    opacity: 0;
+  }
+
+  .service-main-content-mobile :global(p) {
+    margin-bottom: 1rem;
+    color: #e5e5e5;
+  }
+
+  .service-main-content-mobile :global(p:last-of-type) {
+    margin-bottom: 0;
+  }
+
+  .service-main-content-mobile :global(strong) {
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  /* Desktop content styles */
+  .service-main-content {
+    color: #e5e5e5;
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  .service-main-content :global(p) {
+    margin-bottom: 1rem;
+    color: #e5e5e5;
+  }
+
+  .service-main-content :global(p:last-of-type) {
+    margin-bottom: 0;
+  }
+
+  .service-main-content :global(strong) {
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  /* Listas en dos columnas */
+  .service-main-content :global(ul) {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 1.5rem;
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .service-main-content :global(ul li) {
+    position: relative;
+    padding-left: 0;
+    color: #e5e5e5;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .service-main-content :global(ul li::before) {
+    content: "•";
+    color: #d9d9d9;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  /* Listas ordenadas (numbered) */
+  .service-main-content :global(ol) {
+    counter-reset: list-counter;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem 1.5rem;
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .service-main-content :global(ol li) {
+    position: relative;
+    padding-left: 1.5rem;
+    color: #e5e5e5;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    counter-increment: list-counter;
+  }
+
+  .service-main-content :global(ol li::before) {
+    content: counter(list-counter) ".";
+    position: absolute;
+    left: 0;
+    color: #44ee5b;
+    font-weight: bold;
+  }
+
+  /* Mobile lists - single column */
+  .service-main-content-mobile :global(ul),
+  .service-main-content-mobile :global(ol) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 1rem 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .service-main-content-mobile :global(ul li),
+  .service-main-content-mobile :global(ol li) {
+    color: #e5e5e5;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  /* Enlaces */
+  .service-main-content :global(a),
+  .service-main-content-mobile :global(a) {
+    color: #44ee5b;
+    text-decoration: underline;
+    transition: color 0.2s;
+  }
+
+  .service-main-content :global(a:hover),
+  .service-main-content-mobile :global(a:hover) {
+    color: #38c94d;
+  }
+</style>

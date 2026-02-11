@@ -1,0 +1,187 @@
+---
+import { Icon } from "astro-icon/components";
+import { processMarkdown, getImageUrl } from "../../utils/payload";
+interface ImageData {
+  url: string;
+  alt?: string;
+}
+
+interface FirstBlock {
+  title?: string;
+  description?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  image?: ImageData;
+}
+
+interface SecondBlock {
+  title?: string;
+  features?: Array<{ title: string }>;
+  contactText?: string;
+  footerText?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  image?: ImageData;
+}
+
+interface Props {
+  promiseSection?: {
+    enabled?: boolean;
+    firstBlock?: FirstBlock;
+    secondBlock?: SecondBlock;
+  };
+}
+
+const { promiseSection } = Astro.props;
+
+// Valores por defecto
+const defaultFirstBlock: FirstBlock = {
+  title: 'Our Promise to You is to Perform The Correct Plumber Repair at an Honest Price',
+  description: "We've been providing top-notch plumbing and drain services to residents and businesses across Rhode Island for over 17 years. Our Evergreen Technicians have the skills, knowledge, and tools to fix any plumbing problem quickly and efficiently. When your Evergreen licensed services arrive at your home for any plumbing service, they'll determine the full issue, explain their findings, and handle the repairs with the highest level of workmanship, ensuring no surprises and providing you an honest, reasonable price.",
+  ctaText: 'Schedule Now',
+  ctaLink: '#schedule',
+};
+
+const defaultSecondBlock: SecondBlock = {
+  title: 'Evergreen Services is Here for All of Your Plumbing Needs!',
+  features: [
+    { title: 'Fully Stocked Trucks' },
+    { title: 'Fully Licensed & Insured' },
+    { title: 'Friendly Professionals' },
+    { title: '100% Satisfaction Guarantee' },
+    { title: 'Same Day Service Available' },
+    { title: 'Complimentary 2nd Opinions' },
+  ],
+  contactText: 'Still have questions? Contact Us for all our Plumbing related questions!',
+  footerText: 'Evergreen Services is Proudly & Professionally Offering Related Plumber Repair Services in the Warwick, RI area.',
+  ctaText: 'SEE ALL THE OFFERS!',
+  ctaLink: '#offers',
+};
+
+// Merge con valores por defecto
+const firstBlock: FirstBlock = {
+  ...defaultFirstBlock,
+  ...promiseSection?.firstBlock,
+};
+
+const secondBlock: SecondBlock = {
+  ...defaultSecondBlock,
+  ...promiseSection?.secondBlock,
+  features: promiseSection?.secondBlock?.features || defaultSecondBlock.features,
+};
+
+// Importar imágenes por defecto
+import plumberImage from "../../assets/cliente-v2.jpg";
+import handWorkImage from "../../assets/mano.png";
+
+// Obtener URLs de imágenes
+const firstBlockImageUrl = firstBlock.image?.url || plumberImage.src;
+const firstBlockImageAlt = firstBlock.image?.alt || "Plumbing service professional";
+const secondBlockImageUrl = secondBlock.image?.url || handWorkImage.src;
+const secondBlockImageAlt = secondBlock.image?.alt || "Professional service";
+
+---
+
+{(!promiseSection || promiseSection.enabled !== false) && (
+  <>
+    <!-- First Block -->
+    <section class="bg-neutral-950 flex w-full flex-col lg:flex-row">
+      <!-- Image - First on mobile, last on desktop -->
+      <div class="w-full lg:w-1/2 order-first lg:order-last">
+        <img
+          src={getImageUrl(firstBlockImageUrl)}
+          alt={firstBlockImageAlt}
+          class="h-64 lg:h-full w-full object-cover"
+        />
+      </div>
+      
+      <!-- Content -->
+      <div class="w- full lg:w-1/2 p-6 lg:p-18 bg-evergreen-primary">
+        <div class="max-w-4xl text-white">
+          <h2 class="text-xl lg:text-3xl font-bold mb-4 leading-tight">
+            {firstBlock.title}
+          </h2>
+          <p class="text-base lg:text-lg mb-3 leading-relaxed" set:html={processMarkdown(firstBlock.description)}/>
+          <a
+            href={firstBlock.ctaLink}
+            class="hidden lg:inline-flex items-center w-1/2 justify-center gap-2 border-2 bg-evergreen-900 border-evergreen-primary hover:bg-evergreen-primary hover:text-white font-bold py-2 px-4 rounded-full transition-colors text-md"
+          >
+            <Icon name="calendar" size={18} />
+            {firstBlock.ctaText}
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Second Block -->
+    <section class="bg-evergreen-900 flex w-full flex-col lg:flex-row">
+      <!-- Content -->
+      <div class="w-full lg:w-1/2 p-6 lg:p-18 relative">
+        <div class="text-white flex flex-col gap-4 text-base lg:text-lg">
+          <h2 class="text-xl lg:text-3xl font-bold mb-2 lg:mb-4 leading-tight max-w-xs lg:max-w-none">
+            {secondBlock.title}
+          </h2>
+          
+          <!-- Features - 1 column on mobile, 2 columns on desktop -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
+            {secondBlock.features?.map((feature) => (
+              <div class="flex items-center">
+                <Icon
+                  name="check-circle"
+                  size={20}
+                  class="flex-shrink-0 mr-2 text-[#44EE5B]"
+                />
+                <span class="text-sm lg:text-base">{feature.title}</span>
+              </div>
+            ))}
+          </div>
+          
+          <!-- Contact Text -->
+          <p class="text-sm lg:text-base mt-2">
+            {secondBlock.contactText?.includes('Contact Us') 
+              ? (
+                <>
+                  {secondBlock.contactText.split('Contact Us')[0]}
+                  <span class="font-semibold text-[#44EE5B]">Contact Us</span>
+                  {secondBlock.contactText.split('Contact Us')[1]}
+                </>
+              )
+              : secondBlock.contactText
+            }
+          </p>
+          
+          <!-- Footer Text - Hidden on mobile -->
+          <p class="hidden lg:block max-w-md">
+            {secondBlock.footerText}
+          </p>
+          
+          <!-- CTA Button -->
+          <a
+            href={secondBlock.ctaLink}
+            class="text-center w-fit lg:inline-block bg-evergreen-primary border-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 px-12 rounded-full transition-colors text-sm uppercase tracking-wide mt-2"
+          >
+            {secondBlock.ctaText}
+          </a>
+        </div>
+        
+        <!-- Mobile: Image positioned to the right -->
+        <div class="lg:hidden absolute right-0 bottom-30 -rotate-45 w-50 h-auto pointer-events-none">
+          <img
+            src={getImageUrl(secondBlockImageUrl)}
+            alt={secondBlockImageAlt}
+            class="h-auto w-full object-contain"
+          />
+        </div>
+      </div>
+      
+      <!-- Desktop: Image in separate column -->
+      <div class="hidden lg:flex w-1/2 justify-center items-center">
+        <img
+          src={getImageUrl(secondBlockImageUrl)}
+          alt={secondBlockImageAlt}
+          class="h-auto w-[500px]"
+        />
+      </div>
+    </section>
+  </>
+)}

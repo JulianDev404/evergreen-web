@@ -1,0 +1,166 @@
+---
+// apps/web/src/components/Membership.astro
+import arrowImage from "../../assets/arrow.png";
+import backgroundImage from "../../assets/Document-1.png";
+
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+
+if (!data?.enabled) {
+  return null;
+}
+
+const { leftPanel = {}, rightPanel = {}, showArrow = true } = data;
+
+// Valores por defecto
+const leftTitle = leftPanel.title || "Membership";
+const leftSubtitle = leftPanel.subtitle || "Total Home Care Club Membership";
+const leftButtonText = leftPanel.buttonText || "Join the Club";
+const leftBadges = leftPanel.badges || [
+  { text: "Exclusive benefits" },
+  { text: "Priority service" },
+  { text: "Real savings" },
+];
+
+const rightTitle = rightPanel.title || "Need Financing?";
+const rightSubtitle =
+  rightPanel.subtitle || "Flexible plans to fit your budget.";
+const rightButtonText = rightPanel.buttonText || "View Financing Options";
+const rightButtonLink = rightPanel.buttonLink || "#";
+---
+
+<section class="relative w-full overflow-hidden pb-2 bg-black">
+  <!-- Desktop Version - Con imagen de fondo -->
+  <div
+    class="hidden lg:flex relative w-full min-h-[200px]"
+    style={`background-image: url(${backgroundImage.src}); background-size: cover; background-position: center; background-repeat: no-repeat;`}
+  >
+    <!-- LEFT PANEL -->
+    <div
+      class="relative px-10 md:px-16 py-8 md:py-10 flex flex-col justify-center space-y-2"
+      style="width: 45%;"
+    >
+      <div class="flex items-center gap-2 flex-wrap">
+        <h2 class="text-white text-4xl md:text-5xl font-bold">
+          {leftTitle}
+        </h2>
+
+        <button
+          class="bg-black text-white px-6 py-2 rounded-full font-semibold text-sm whitespace-nowrap hover:bg-neutral-900 transition-colors"
+        >
+          {leftButtonText}
+        </button>
+      </div>
+
+      <p class="text-white text-2xl md:text-2xl">
+        {leftSubtitle}
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        {
+          leftBadges.map((badge: any) => (
+            <span class="bg-evergreen-900 text-[#D0FBD6] px-5 py-2 rounded-full text-sm font-medium">
+              {badge.text}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div
+      class="relative px-10 md:px-16 py-8 md:py-10 flex flex-col justify-center space-y-2"
+      style="width: 55%;"
+    >
+      <h2 class="text-[#D0FBD6] text-4xl md:text-5xl font-bold">
+        {rightTitle}
+      </h2>
+
+      <p class="text-[#A1F7AD] text-xl md:text-2xl">
+        {rightSubtitle}
+      </p>
+
+      <a
+        href={rightButtonLink}
+        class="bg-evergreen-primary hover:bg-evergreen-600 text-white px-8 py-3 rounded-full font-bold text-base w-fit transition-colors inline-block"
+      >
+        {rightButtonText}
+      </a>
+
+      <!-- Flecha grande -->
+      {
+        showArrow && (
+          <img
+            src={arrowImage.src}
+            alt=""
+            class="absolute bottom-0 right-8 w-96 h-auto pointer-events-none"
+          />
+        )
+      }
+    </div>
+  </div>
+
+  <!-- Mobile Version - Sin imagen de fondo -->
+  <div class="lg:hidden relative w-full space-y-2">
+    <!-- LEFT PANEL - Verde brillante -->
+    <div class="bg-evergreen-primary px-8 py-8 space-y-2">
+      <div class="flex gap-3 items-start">
+        <h2 class="text-white text-3xl font-bold">
+          {leftTitle}
+        </h2>
+
+        <button
+          class="bg-black text-white px-2 py-1 rounded-full font-semibold text-sm hover:bg-neutral-900 transition-colors whitespace-nowrap"
+        >
+          {leftButtonText}
+        </button>
+      </div>
+
+      <p class="text-white text-lg">
+        {leftSubtitle}
+      </p>
+
+      <div class="flex flex-wrap gap-2">
+        {
+          leftBadges.map((badge: any) => (
+            <span class="bg-evergreen-900 text-[#D0FBD6] px-2 py-1.5 rounded-full text-xs font-medium">
+              {badge.text}
+            </span>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL - Verde oscuro -->
+    <div class="relative bg-evergreen-900 px-8 py-8 space-y-1">
+      <h2 class="text-[#D0FBD6] text-3xl font-bold">
+        {rightTitle}
+      </h2>
+
+      <p class="text-[#A1F7AD] text-base">
+        {rightSubtitle}
+      </p>
+
+      <a
+        href={rightButtonLink}
+        class="bg-evergreen-primary hover:bg-evergreen-600 text-white px-2 py-1 rounded-full font-bold text-sm w-fit transition-colors inline-block"
+      >
+        {rightButtonText}
+      </a>
+
+      <!-- Flecha más pequeña para móvil -->
+      {
+        showArrow && (
+          <img
+            src={arrowImage.src}
+            alt=""
+            class="absolute bottom-0 -right-8 w-72 h-auto pointer-events-none"
+          />
+        )
+      }
+    </div>
+  </div>
+</section>

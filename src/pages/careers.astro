@@ -1,0 +1,427 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl } from "../utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getCareersPage = async () => {
+  const res = await fetch(`${API_URL}/api/globals/careers-page?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getJobs = async () => {
+  const res = await fetch(
+    `${API_URL}/api/jobs?where[active][equals]=true&limit=20&depth=1&sort=createdAt`,
+  );
+  const data = await res.json();
+  return data.docs || [];
+};
+
+const [siteSettings, careersPage, jobs] = await Promise.all([
+  getSiteSettings(),
+  getCareersPage(),
+  getJobs(),
+]);
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "Contact" },
+    { name: "Jobs/Careers", url: "/careers" },
+  ];
+};
+
+// Format date helper
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - date.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "1 day ago";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} months ago`;
+};
+
+// Format job type for display
+const formatJobType = (type: string) => {
+  return type
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+};
+---
+
+<Layout title="Careers | Evergreen Services" navbarBG={true}>
+  <section
+    class="pt-28 lg:pt-32 pb-10 lg:pb-18 bg-white flex flex-col items-center gap-10 lg:gap-12"
+  >
+    <!-- Hero Section -->
+    <section
+      class="flex flex-col justify-center items-center gap-6 lg:gap-8 max-w-6xl w-full px-6"
+    >
+      <!-- Breadcrumbs -->
+      <section class="flex justify-center items-center w-full">
+        <div class="flex items-center gap-2 text-sm text-neutral-secondary">
+          {
+            generateBreadcrumbs().map((breadcrumb, index) => (
+              <span key={breadcrumb.url} class="flex items-center gap-2">
+                <a href={breadcrumb.url} class="">
+                  {breadcrumb.name}
+                </a>
+                {index < generateBreadcrumbs().length - 1 && (
+                  <span class="">&rsaquo;</span>
+                )}
+              </span>
+            ))
+          }
+        </div>
+      </section>
+
+      <!-- Title -->
+      <h2 class="text-4xl lg:text-5xl lg:text-6xl font-bold text-center">
+        {careersPage.hero.title}
+        <span class="text-evergreen-primary"
+          >{careersPage.hero.highlightedTitle}</span
+        >
+      </h2>
+
+      <!-- Search Box -->
+      <div
+        class="w-full p-6 border border-neutral-200 flex flex-col items-center justify-center rounded-xl shadow-sm gap-6 bg-white"
+      >
+        <div class="flex flex-col lg:flex-row gap-3 items-center w-full">
+          <div class="flex-1 w-full">
+            <div class="relative">
+              <Icon
+                name="search"
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400"
+              />
+              <input
+                type="text"
+                name="keyword"
+                placeholder={careersPage.searchSection.keywordPlaceholder}
+                class="w-full pl-10 pr-4 py-3 rounded-lg bg-[#F4F4F4] border border-[#D9D9D9] text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div class="flex-1 w-full">
+            <div class="relative">
+              <Icon
+                name="map-marker"
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400"
+              />
+              <input
+                type="text"
+                name="location"
+                placeholder={careersPage.searchSection.locationPlaceholder}
+                class="w-full pl-10 pr-4 py-3 rounded-lg bg-[#F4F4F4] border border-[#D9D9D9] text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="hidden lg:block px-8 py-3 rounded-lg bg-evergreen-primary text-white font-semibold hover:bg-evergreen-600 transition-colors duration-200 whitespace-nowrap"
+          >
+            {careersPage.searchSection.searchButtonText}
+          </button>
+        </div>
+
+        <!-- Job Type Filters (Desktop only - shown inline) -->
+        <div
+          class="hidden lg:flex items-center justify-between w-full flex-wrap gap-4"
+        >
+          <div class="flex items-center gap-4 flex-wrap">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="freelance"
+                class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary"
+              />
+              <span class="text-neutral-600 text-base">Freelance</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="fulltime"
+                class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary"
+              />
+              <span class="text-neutral-600 text-base">Full Time</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="internship"
+                class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary"
+              />
+              <span class="text-neutral-600 text-base">Internship</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="parttime"
+                class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary"
+              />
+              <span class="text-neutral-600 text-base">Part Time</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                name="temporary"
+                class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary"
+              />
+              <span class="text-neutral-600 text-base">Temporary</span>
+            </label>
+          </div>
+
+          <label
+            class="flex items-center gap-2 bg-neutral-100 px-3 py-2 rounded-lg border border-neutral-200 cursor-pointer"
+          >
+            <input
+              type="checkbox"
+              name="remote"
+              class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary"
+            />
+            <span class="text-neutral-600 text-base"
+              >{careersPage.searchSection.remoteOnlyText}</span
+            >
+          </label>
+        </div>
+
+        <!-- Job Type Filters (Mobile only - shown as single row) -->
+        <div
+          class="flex lg:hidden items-center gap-3 w-full overflow-x-auto pb-2"
+        >
+          <label
+            class="flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              name="freelance"
+              class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary accent-evergreen-primary"
+            />
+            <span class="text-neutral-600 text-sm">Freelance</span>
+          </label>
+          <label
+            class="flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              name="fulltime"
+              checked
+              class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary accent-evergreen-primary"
+            />
+            <span class="text-neutral-600 text-sm">Full Time</span>
+          </label>
+          <label
+            class="flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              name="internship"
+              class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary accent-evergreen-primary"
+            />
+            <span class="text-neutral-600 text-sm">Internship</span>
+          </label>
+          <label
+            class="flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              name="parttime"
+              class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary accent-evergreen-primary"
+            />
+            <span class="text-neutral-600 text-sm">Part Time</span>
+          </label>
+          <label
+            class="flex items-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <input
+              type="checkbox"
+              name="temporary"
+              class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary accent-evergreen-primary"
+            />
+            <span class="text-neutral-600 text-sm">Temporary</span>
+          </label>
+        </div>
+
+        <!-- Remote Only (Mobile) -->
+        <label
+          class="flex lg:hidden items-center gap-2 bg-neutral-100 px-3 py-2 rounded-lg border border-neutral-200 cursor-pointer w-full"
+        >
+          <input
+            type="checkbox"
+            name="remote"
+            class="w-4 h-4 rounded border-neutral-300 text-evergreen-primary focus:ring-evergreen-primary accent-evergreen-primary"
+          />
+          <span class="text-neutral-600 text-sm"
+            >{careersPage.searchSection.remoteOnlyText}</span
+          >
+        </label>
+
+        <!-- Search Button (Mobile only) -->
+        <button
+          type="submit"
+          class="lg:hidden w-full px-8 py-3 rounded-lg bg-evergreen-primary text-white font-bold hover:bg-evergreen-600 transition-colors duration-200"
+        >
+          {careersPage.searchSection.searchButtonText}
+        </button>
+      </div>
+    </section>
+
+    <hr class="hidden lg:block w-full border border-neutral-100" />
+
+    <!-- Jobs List -->
+    <section
+      class="max-w-6xl w-full flex flex-col justify-center items-center gap-6 px-6"
+    >
+      <div
+        class="flex justify-between items-start sm:items-center gap-4 w-full"
+      >
+        <h5 class="font-semibold lg:font-semibold text-lg lg:text-lg">
+          {jobs.length}
+          {jobs.length === 1 ? "Job" : "Jobs"} Found
+        </h5>
+        <div class="flex items-center gap-2">
+          <label class="text-neutral-600 text-base" for="sort">Sort by:</label>
+          <select
+            name="sort"
+            id="sort"
+            class="rounded-lg px-3 py-1 text-base focus:outline-none focus:ring-2 focus:ring-evergreen-primary"
+          >
+            <option value="newest">Newest</option>
+            <option value="oldest">Oldest</option>
+          </select>
+        </div>
+      </div>
+
+      <section
+        class="w-full flex flex-col gap-3 lg:gap-3 justify-center items-center"
+      >
+        {
+          jobs.map((job: any) => (
+            <article class="w-full p-5 border border-neutral-200 flex flex-col lg:flex-row lg:items-center justify-between gap-4 lg:gap-0 rounded-xl hover:border-evergreen-primary transition-colors duration-200 bg-white">
+              <div class="flex flex-col gap-2">
+                <h5 class="font-bold text-xl text-neutral-900">{job.title}</h5>
+                <p class="text-evergreen-primary text-base font-medium">
+                  Evergreen Service
+                </p>
+                <div class="mt-2 flex gap-2 sm:gap-4 flex-wrap">
+                  <div class="flex gap-2 items-center text-neutral-600 text-sm">
+                    <Icon name="suitcase" class="w-4 h-4" />
+                    <span>{formatJobType(job.type)}</span>
+                  </div>
+                  <div class="flex gap-2 items-center text-neutral-600 text-sm">
+                    <Icon name="map-marker" class="w-4 h-4" />
+                    <span>{job.location}</span>
+                  </div>
+                  <div class="flex gap-2 items-center text-neutral-600 text-sm">
+                    <Icon name="clock" class="w-4 h-4" />
+                    <span>{formatDate(job.createdAt)}</span>
+                  </div>
+                </div>
+              </div>
+              <a
+                type="button"
+                class="w-fit lg:w-auto px-6 py-2 rounded-lg bg-evergreen-primary text-white text-base font-semibold hover:bg-evergreen-600 transition-colors duration-200 whitespace-nowrap"
+                href={"job/" + job.slug}
+              >
+                Apply Now
+              </a>
+            </article>
+          ))
+        }
+      </section>
+    </section>
+
+    <hr class="hidden lg:block w-full border border-neutral-100" />
+
+    <!-- Benefits Section -->
+    <section class="w-full flex justify-center items-center px-6">
+      <div
+        class="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-12 max-w-6xl w-full"
+      >
+        <div class="flex flex-col gap-4 lg:gap-6 flex-1 w-full">
+          <h4 class="font-bold text-2xl lg:text-3xl text-neutral-900">
+            {careersPage.benefits.title}
+          </h4>
+          <ul class="space-y-3 lg:space-y-4 flex flex-col">
+            {
+              careersPage.benefits.items?.map((item: any) => (
+                <li class="flex items-start gap-2 lg:gap-3">
+                  <div class="flex-shrink-0 mt-0.5">
+                    <Icon
+                      name="check-circle"
+                      class="w-5 h-5 text-evergreen-primary"
+                    />
+                  </div>
+                  <span class="text-neutral-700 text-sm lg:text-base leading-relaxed">
+                    {item.text}
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        {
+          careersPage.benefits.image && (
+            <img
+              src={getImageUrl(careersPage.benefits.image)}
+              alt="Benefits"
+              class="hidden lg:block lg:w-1/2 h-auto rounded-2xl object-cover"
+            />
+          )
+        }
+      </div>
+    </section>
+
+    <!-- Requirements Section -->
+    <section class="w-full flex justify-center items-center px-6">
+      <div
+        class="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-12 max-w-6xl w-full"
+      >
+        <div class="flex flex-col gap-4 lg:gap-6 flex-1 w-full">
+          <h4 class="font-bold text-2xl lg:text-3xl text-neutral-900">
+            {careersPage.requirements.title}
+          </h4>
+          <ul class="space-y-3 lg:space-y-4 flex flex-col">
+            {
+              careersPage.requirements.items?.map((item: any) => (
+                <li class="flex items-start gap-2 lg:gap-3">
+                  <div class="flex-shrink-0 mt-0.5">
+                    <Icon
+                      name="check-circle"
+                      class="w-5 h-5 text-evergreen-primary"
+                    />
+                  </div>
+                  <span class="text-neutral-700 text-sm lg:text-base leading-relaxed">
+                    {item.text}
+                  </span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        {
+          careersPage.requirements.image && (
+            <img
+              src={getImageUrl(careersPage.requirements.image)}
+              alt="Requirements"
+              class="w-full lg:w-1/2 h-auto rounded-2xl object-cover"
+            />
+          )
+        }
+      </div>
+    </section>
+  </section>
+</Layout>

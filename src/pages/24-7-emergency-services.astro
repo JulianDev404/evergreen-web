@@ -1,0 +1,343 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl, processMarkdown } from "../utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const [siteSettings, contactPages] = await Promise.all([
+  getSiteSettings(),
+  getContactPages(),
+]);
+
+const { company } = siteSettings;
+const { emergencyService, contactUs, location, contactForm } = contactPages;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "Contact" },
+    { name: "24/7 Emergency Services", url: "/24-7-emergency-services" },
+  ];
+};
+---
+
+<Layout title="24/7 Emergency Services | Evergreen Services" navbarBG={true}>
+  <section
+    class="pt-28 lg:pt-32 pb-10 lg:pb-20 bg-white flex flex-col items-center gap-10 lg:gap-20"
+  >
+    <!-- Emergency Services Section -->
+    <section
+      class="flex flex-col lg:flex-row justify-center lg:justify-between items-start gap-8 lg:gap-12 px-6 lg:px-10 w-full lg:container lg:mx-auto lg:max-w-7xl"
+    >
+      <!-- Left Column - Emergency Service Info -->
+      <section
+        class="flex flex-col justify-center items-start gap-6 lg:gap-8 w-full lg:w-auto lg:flex-1"
+      >
+        <!-- Breadcrumbs -->
+        <section
+          class="flex items-center w-full justify-center lg:justify-start"
+        >
+          <div class="flex items-center gap-2 text-sm text-neutral-secondary">
+            {
+              generateBreadcrumbs().map((breadcrumb, index) => (
+                <span key={breadcrumb.url} class="flex items-center gap-2">
+                  <a href={breadcrumb.url} class="">
+                    {breadcrumb.name}
+                  </a>
+                  {index < generateBreadcrumbs().length - 1 && (
+                    <span class="">&rsaquo;</span>
+                  )}
+                </span>
+              ))
+            }
+          </div>
+        </section>
+
+        <!-- Badge -->
+        <span
+          class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm lg:text-base font-bold rounded-full"
+        >
+          24/7 Emergency
+        </span>
+
+        <!-- Title and Description -->
+        <div class="w-full">
+          <h2
+            class="text-3xl lg:text-6xl text-evergreen-primary font-bold mb-4 max-w-xl"
+          >
+            {emergencyService.title}
+          </h2>
+          <div
+            class="text-neutral-900 text-base lg:text-lg max-w-xl prose prose-base lg:prose-lg prose-p:text-neutral-900"
+            set:html={processMarkdown(emergencyService.description)}
+          />
+        </div>
+
+        <!-- Contact Details -->
+        <div class="flex flex-col items-start gap-4 lg:gap-6 w-full">
+          <!-- Phone -->
+          <div class="flex gap-3 items-center">
+            <div class="bg-evergreen-900 p-3 rounded-lg">
+              <Icon name="phone-add" class="w-6 h-6 text-[#44EE5B]" />
+            </div>
+            <a
+              href={`tel:${contactUs.contactInfo.phone.replace(/\D/g, "")}`}
+              class="text-evergreen-primary text-base lg:text-lg font-medium"
+            >
+              {contactUs.contactInfo.phone}
+            </a>
+          </div>
+
+          <!-- Email -->
+          <div class="flex gap-3 items-center">
+            <div class="bg-evergreen-900 p-3 rounded-lg">
+              <Icon name="email" class="w-6 h-6 text-[#44EE5B]" />
+            </div>
+            <a
+              href={`mailto:${contactUs.contactInfo.email}`}
+              class="text-evergreen-primary text-base lg:text-lg font-medium"
+            >
+              {contactUs.contactInfo.email}
+            </a>
+          </div>
+
+          <!-- Hours -->
+          <div class="flex gap-3 items-start">
+            <div class="bg-evergreen-900 p-3 rounded-lg">
+              <Icon name="clock" class="w-6 h-6 text-[#44EE5B]" />
+            </div>
+            <div class="flex flex-col items-start gap-1">
+              <span class="text-evergreen-primary text-base lg:text-lg">
+                <span class="font-bold">Monday to Friday:</span>
+                <span class="font-normal ml-1"
+                  >{contactUs.contactInfo.mondayToFriday}</span
+                >
+              </span>
+              <span class="text-evergreen-primary text-base lg:text-lg">
+                <span class="font-bold">Weekends:</span>
+                <span class="font-normal ml-1"
+                  >{contactUs.contactInfo.weekends}</span
+                >
+              </span>
+            </div>
+          </div>
+
+          <!-- Live Answering -->
+          <div class="flex gap-3 items-center">
+            <div class="bg-evergreen-900 p-3 rounded-lg">
+              <Icon name="agent" class="w-6 h-6 text-[#44EE5B]" />
+            </div>
+            <span
+              class="text-evergreen-primary text-base lg:text-lg font-medium"
+            >
+              {contactUs.contactInfo.liveAnswering}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column - Contact Form -->
+      <section
+        class="flex items-start justify-start w-full lg:w-auto lg:flex-1"
+      >
+        <div
+          class="rounded-2xl lg:rounded-3xl overflow-hidden border-2 border-neutral-300 p-6 lg:p-8 w-full max-w-md lg:max-w-lg bg-white"
+        >
+          <div class="flex justify-center mb-6 lg:mb-8">
+            <img
+              src={getImageUrl(company.logoAlt)}
+              alt={company.companyName}
+              class="h-10 lg:h-12 w-auto"
+            />
+          </div>
+
+          <form id="contact-form-desktop" class="space-y-4">
+            <!-- First Name -->
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                First Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                placeholder="e.g., John"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Last Name -->
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                Last Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                placeholder="e.g., Smith"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                Email <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="e.g., john.smith@email.com"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Phone Number -->
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                placeholder="e.g., (401) 293-2048"
+                required
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent"
+              />
+            </div>
+
+            <!-- Message -->
+            <div>
+              <label class="text-black text-sm font-medium mb-2 block">
+                How we can help you <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="message"
+                placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                required
+                rows="4"
+                class="w-full px-4 py-3 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary focus:border-transparent resize-none"
+              ></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              type="submit"
+              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 lg:py-4 rounded-full font-bold text-base lg:text-lg transition-colors"
+            >
+              {contactForm.submitText}
+            </button>
+          </form>
+        </div>
+      </section>
+    </section>
+
+    <!-- Location Section -->
+    <section
+      class="flex flex-col lg:flex-row justify-between items-start gap-10 lg:gap-16 px-6 lg:px-10 w-full lg:container lg:mx-auto lg:max-w-7xl"
+    >
+      <!-- Map - Shows first on mobile, second on desktop -->
+      <div class="w-full lg:w-1/2 order-0 lg:order-1 relative">
+        <img
+          src={location.mapImage
+            ? getImageUrl(location.mapImage)
+            : "/assets/map-2.png"}
+          alt="Map"
+          class="w-full rounded-xl"
+        />
+        {
+          location.pinImage && (
+            <img
+              src={getImageUrl(location.pinImage)}
+              alt="Location pin"
+              class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 lg:w-16"
+            />
+          )
+        }
+        <div
+          class="absolute top-1/4 right-4 lg:right-8 -translate-y-1/2 bg-white p-4 lg:p-6 rounded-xl shadow-lg w-[200px] lg:w-[280px]"
+        >
+          <div class="flex flex-col justify-center gap-2">
+            <img
+              src={getImageUrl(company.logoAlt)}
+              alt={company.companyName}
+              class="w-12 lg:w-20"
+            />
+            <h4 class="text-black text-sm lg:text-base font-bold">
+              Warwick, Rhode Island
+            </h4>
+            <p
+              class="text-black text-xs lg:text-sm whitespace-pre-line leading-tight"
+            >
+              {location.address}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location Info - Shows second on mobile, first on desktop -->
+      <div
+        class="flex flex-col gap-6 lg:gap-8 w-full lg:w-1/2 order-1 lg:order-2"
+      >
+        <!-- Badge -->
+        <span
+          class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-sm lg:text-base font-bold rounded-full w-fit"
+        >
+          {location.badge}
+        </span>
+
+        <!-- Title and Description -->
+        <div class="w-full">
+          <h2
+            class="text-3xl lg:text-6xl text-evergreen-primary font-bold mb-4"
+          >
+            {location.title}
+          </h2>
+          <div
+            class="text-neutral-900 text-base lg:text-lg max-w-xl prose prose-base lg:prose-lg prose-p:text-neutral-900"
+            set:html={processMarkdown(location.description)}
+          />
+        </div>
+
+        <!-- Address with Icon -->
+        <div>
+          <div class="flex gap-4 items-start">
+            <div class="bg-evergreen-900 p-4 lg:p-6 rounded-xl flex-shrink-0">
+              <Icon
+                name="map-marker"
+                class="text-[#44EE5B] w-8 h-8 lg:w-10 lg:h-10"
+              />
+            </div>
+            <div class="flex flex-col items-start gap-1">
+              <span
+                class="text-evergreen-primary text-base lg:text-lg font-bold"
+              >
+                {location.locationName}
+              </span>
+              <span
+                class="text-neutral-900 text-sm lg:text-base whitespace-pre-line leading-relaxed"
+              >
+                {location.address}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section></Layout
+>

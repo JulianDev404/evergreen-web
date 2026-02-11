@@ -1,0 +1,348 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+// Components
+import ServiceHero from "../../components/services/ServiceHero.astro";
+import PromiseSection from "../../components/services/Promise.astro";
+import TopQuality from "../../components/services/TopQuality.astro";
+import ScheduleCTA from "../../components/services/ScheduleCTA.astro";
+import OffersSpecials from "../../components/services/OffersSpecials.astro";
+import RelatedServices from "../../components/services/RelatedServices.astro";
+import CustomerFeedback from "../../components/home/CustomerFeedback.astro";
+import ServiceArea from "../../components/home/ServiceArea.astro";
+import Financing from "../../components/services/Financing.astro";
+import FAQ from "../../components/services/FAQ.astro";
+
+// Environment
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+// Params
+const { slug } = Astro.params;
+
+// =============================================================================
+// API REQUESTS WITH RETRY
+// =============================================================================
+
+const fetchWithRetry = async (url: string, retries = 1, delay = 1000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return await res.json();
+    } catch (error) {
+      console.error(`Attempt ${i + 1} failed for ${url}:`, error);
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+};
+
+const getService = async (serviceSlug: string) => {
+  try {
+    const data = await fetchWithRetry(
+      `${API_URL}/api/services?where[slug][equals]=${serviceSlug}&where[active][equals]=true&depth=3`,
+    );
+
+    // Si hay múltiples resultados con el mismo slug
+    if (data.docs && data.docs.length > 1) {
+      // Priorizar: primero categorías (con parent main), luego main services
+      const category = data.docs.find(
+        (s: any) =>
+          s.parentService &&
+          typeof s.parentService === "object" &&
+          s.parentService.isMainService,
+      );
+
+      if (category) {
+        return category;
+      }
+
+      // Si no hay categoría, usar el primero
+      return data.docs[0];
+    }
+
+    return data.docs?.[0] || null;
+  } catch (error) {
+    console.error("Error fetching service:", error);
+    return null;
+  }
+};
+
+const getServicesPage = async () => {
+  try {
+    return await fetchWithRetry(`${API_URL}/api/globals/services-page?depth=2`);
+  } catch (error) {
+    console.error("Error fetching services page:", error);
+    return {};
+  }
+};
+
+const getHomePage = async () => {
+  try {
+    return await fetchWithRetry(`${API_URL}/api/globals/homepage?depth=2`);
+  } catch (error) {
+    console.error("Error fetching homepage:", error);
+    return {};
+  }
+};
+
+// =============================================================================
+// DATA FETCHING
+// =============================================================================
+
+const service = await getService(slug);
+
+// Debug log
+if (!service) {
+  console.error(`[${slug}] Service not found after retries`);
+}
+
+// 404 if service not found
+// if (!service) {
+//   return Astro.redirect("/404");
+// }
+
+// Fetch remaining data in parallel
+const [servicesPage, homepage] = await Promise.all([
+  getServicesPage(),
+  getHomePage(),
+]);
+
+// =============================================================================
+// DATA EXTRACTION
+// =============================================================================
+
+const { showLogos } = servicesPage || {};
+const { serviceArea } = homepage || {};
+
+// Contact info
+const phoneNumber = "(401) 293-2048";
+
+// Helper: Get image data
+const getImageData = (image: any) => {
+  if (!image || typeof image !== "object") return undefined;
+  return {
+    url: image.url,
+    alt: image.alt || "",
+  };
+};
+
+// =============================================================================
+// COMPONENT DATA PREPARATION
+// =============================================================================
+
+// Helper: Build breadcrumbs based on service hierarchy
+const buildBreadcrumbs = (service: any) => {
+  const crumbs = [{ label: "Home", href: "/" }];
+
+  try {
+    // ✅ VALIDACIÓN: Verificar que service existe
+    if (!service) {
+      return crumbs;
+    }
+
+    // Obtener referencias con validaciones
+    const parent = service.parentService;
+    const grandparent = parent?.parentService;
+
+    // Add grandparent (main service like "Plumbing")
+    if (grandparent && typeof grandparent === "object" && grandparent.title) {
+      crumbs.push({
+        label: grandparent.title,
+        href: grandparent.slug ? `/${grandparent.slug}` : undefined,
+      });
+    }
+
+    // Add parent (category like "General Plumbing")
+    if (parent && typeof parent === "object" && parent.title) {
+      const parentSlug = parent.slug;
+      const grandparentSlug = grandparent?.slug;
+
+      // Si grandparent es servicio principal, omitirlo de la URL
+      const parentHref = grandparent?.isMainService
+        ? parentSlug
+          ? `/${parentSlug}`
+          : undefined
+        : parentSlug && grandparentSlug
+          ? `/${grandparentSlug}/${parentSlug}`
+          : undefined;
+
+      crumbs.push({
+        label: parent.title,
+        href: parentHref,
+      });
+    }
+
+    // Add current service
+    crumbs.push({ label: service.title });
+  } catch (error) {
+    console.error("Error building breadcrumbs:", error);
+  }
+
+  return crumbs;
+};
+// Breadcrumbs
+const breadcrumbs = buildBreadcrumbs(service);
+
+// Hero Section
+const heroData = {
+  breadcrumbs,
+  offer: {
+    badge: service.heroSection?.heroOffer?.badge || "Limited Time Offer",
+    title: service.heroSection?.heroOffer?.title || service.title,
+    icon: service.heroSection?.heroOffer?.icon,
+    subtitle:
+      service.heroSection?.heroOffer?.subtitle ||
+      "Expert service when you need it",
+    price: service.heroSection?.heroOffer?.price || 99,
+    offer: service.heroSection?.heroOffer?.offer || undefined,
+    monthlyPayment: service.heroSection?.heroOffer?.monthlyPayment || false,
+    ctaText: service.heroSection?.heroOffer?.ctaText || "SEE OFFER DETAILS",
+    ctaLink: service.heroSection?.heroOffer?.ctaLink || "#offers",
+  },
+  schedule: {
+    title:
+      service.heroSection?.heroSchedule?.title ||
+      "Schedule With Evergreen Services Today",
+    subtitle:
+      service.heroSection?.heroSchedule?.subtitle ||
+      "Fast, reliable service when you need it",
+    phone: phoneNumber,
+    phoneLabel: service.heroSection?.heroSchedule?.phoneLabel || "CALL NOW",
+    scheduleText:
+      service.heroSection?.heroSchedule?.scheduleText || "Schedule Now",
+    scheduleLink:
+      service.heroSection?.heroSchedule?.scheduleLink || "#schedule",
+  },
+};
+
+// Promise Section
+const promiseData = service.promiseSection
+  ? {
+      enabled: service.promiseSection.enabled,
+      firstBlock: {
+        title: service.promiseSection.firstBlock?.title,
+        description: service.promiseSection.firstBlock?.description,
+        ctaText: service.promiseSection.firstBlock?.ctaText,
+        ctaLink: service.promiseSection.firstBlock?.ctaLink,
+        image: getImageData(service.promiseSection.firstBlock?.image),
+      },
+      secondBlock: {
+        title: service.promiseSection.secondBlock?.title,
+        features: service.promiseSection.secondBlock?.features,
+        contactText: service.promiseSection.secondBlock?.contactText,
+        footerText: service.promiseSection.secondBlock?.footerText,
+        ctaText: service.promiseSection.secondBlock?.ctaText,
+        ctaLink: service.promiseSection.secondBlock?.ctaLink,
+        image: getImageData(service.promiseSection.secondBlock?.image),
+      },
+    }
+  : undefined;
+
+// Top Quality Section
+const topQualityData = {
+  contentSection: service.contentSection,
+  repairSigns: service.repairSigns,
+};
+
+// Schedule CTA Section
+const scheduleCTAData = {
+  title:
+    service.scheduleCTA?.title ||
+    "Schedule a Comprehensive Home Plumber Repair Near You in Warwick, RI",
+  description:
+    service.scheduleCTA?.description ||
+    "Is your home in need of plumbing expertise? Evergreen Services is the trusted team in Warwick, RI. Plumber repair services near you. Schedule your service today & ensure your faucet is on the right track!",
+};
+
+// Offers Section
+const offersData = {
+  heading:
+    service.offersSection?.heading || "Plumber Offers & Service Specials",
+  offers: service.offersSection || [],
+  disclaimer: service.offersSection?.disclaimer,
+  enabled:
+    service.offersSection !== undefined && service.offersSection.length > 0,
+};
+
+// Related Services Section
+const relatedServicesData = service.relatedServicesSection;
+
+// Financing Section
+const financingData = service.financingSection;
+
+// FAQ Section
+const faqData = service.faqSection;
+
+// SEO
+const seoData = {
+  title: service.seo?.title || `${service.title} | Evergreen Services`,
+  description:
+    service.seo?.description ||
+    service.shortDescription ||
+    `Professional ${service.title} services in Warwick, RI.`,
+};
+---
+
+<Layout title={seoData.title} description={seoData.description}>
+  <!-- Hero -->
+  <ServiceHero
+    breadcrumbs={heroData.breadcrumbs}
+    offer={heroData.offer}
+    schedule={heroData.schedule}
+  />
+
+  <!-- Promise -->
+  {promiseData && <PromiseSection promiseSection={promiseData} />}
+
+  <!-- Top Quality Content -->
+  <TopQuality {...topQualityData} />
+
+  <!-- Schedule CTA -->
+  <ScheduleCTA
+    title={scheduleCTAData.title}
+    description={scheduleCTAData.description}
+    ctaText={service.scheduleCTA?.ctaText}
+    ctaLink={service.scheduleCTA?.ctaLink}
+  />
+
+  <!-- Offers & Specials -->
+  {
+    offersData.enabled && (
+      <OffersSpecials
+        heading={offersData.heading}
+        offers={offersData.offers}
+        disclaimer={offersData.disclaimer}
+      />
+    )
+  }
+
+  <!-- Related Services -->
+  {
+    relatedServicesData && (
+      <RelatedServices relatedServicesSection={relatedServicesData} />
+    )
+  }
+
+  <!-- Customer Reviews -->
+  <CustomerFeedback
+    class="bg-neutral-50 lg:bg-[#085E14]"
+    showLogos={showLogos}
+    textStyle="text-white"
+    showGoogleRating={false}
+  />
+
+  <!-- Service Area -->
+  <ServiceArea data={serviceArea} />
+
+  <!-- Financing -->
+  {financingData && <Financing financingSection={financingData} />}
+
+  <!-- FAQ -->
+  {faqData && <FAQ faqSection={faqData} />}
+</Layout>

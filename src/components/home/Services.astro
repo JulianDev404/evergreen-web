@@ -1,0 +1,433 @@
+---
+// apps/web/src/components/home/Services.astro
+import { Icon } from "astro-icon/components";
+import DynamicIcon from "../DynamicIcon.astro";
+import { processMarkdown, TEXT_STYLES } from "@/utils/payload";
+
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+
+// Environment
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+// ✅ Verificar que data existe
+if (!data?.enabled) {
+  return null;
+}
+
+// ✅ Destructurar con valores por defecto
+const { 
+  professionalCard = {}, 
+  callBanner = {}, 
+  mainServicesSettings = {} 
+} = data;
+
+// =============================================================================
+// API REQUESTS
+// =============================================================================
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getMainServices = async () => {
+  const res = await fetch(
+    `${API_URL}/api/services?where[isMainService][equals]=true&where[active][equals]=true&sort=createdAt&limit=100&depth=1`
+  );
+  const data = await res.json();
+  return data.docs || [];
+};
+
+const getSubServices = async (parentId: string, limit: number) => {
+  const res = await fetch(
+    `${API_URL}/api/services?where[parentService][equals]=${parentId}&where[active][equals]=true&sort=order&limit=${limit}&depth=0`
+  );
+  const data = await res.json();
+  return data.docs || [];
+};
+
+// =============================================================================
+// DATA FETCHING
+// =============================================================================
+
+const siteSettings = await getSiteSettings();
+
+// ✅ Extraer con múltiples niveles de fallback
+const maxSubServices = mainServicesSettings?.maxSubServicesPerCard ?? 3;
+const showAllServicesLink = mainServicesSettings?.showAllServicesLink ?? true;
+
+
+
+// Obtener servicios principales
+const mainServices = await getMainServices();
+
+// ✅ Verificar que hay servicios
+if (!mainServices || mainServices.length === 0) {
+  console.warn('No main services found');
+  return null;
+}
+
+// Obtener sub-servicios para cada servicio principal
+const servicesWithSubs = await Promise.all(
+  mainServices.map(async (service: any) => {
+    const subServices = await getSubServices(service.id, maxSubServices);
+    return {
+      ...service,
+      subServices: subServices,
+    };
+  })
+);
+
+const phoneNumber = siteSettings?.contact?.phone || '(401) 293-2048';
+const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
+---
+
+<section class="bg-black lg:py-12 relative overflow-x-hidden">
+  <!-- Call Banner - Solo Desktop -->
+  {callBanner?.enabled && (
+    <div class="hidden lg:block absolute top-3 right-16 bg-evergreen-primary rounded-t-3xl px-16 py-2 shadow-md z-30">
+      <h2 class="text-white text-3xl font-bold">
+        {callBanner.text || 'CALL NOW'}
+        {callBanner.showPhone && ` ${phoneNumber}`}
+      </h2>
+    </div>
+  )}
+
+  <!-- Version Desktop -->
+  <div class="hidden lg:block mx-auto px-4 pt-4 space-y-2">
+    <!-- Primera fila: Primer servicio + Professional Card -->
+    <section class="flex gap-2">
+      <!-- Primer servicio -->
+      {servicesWithSubs[0] && (
+        <div class="w-xl relative rounded-2xl overflow-hidden group h-80">
+          {servicesWithSubs[0].image && typeof servicesWithSubs[0].image !== "string" && (
+            <img
+              src={API_URL.replace('/api', '') + servicesWithSubs[0].image.url}
+              alt={servicesWithSubs[0].title}
+              class="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+          <div class="relative h-full p-6 flex flex-col">
+            <h3 class="text-white text-3xl font-bold mb-auto">
+              {servicesWithSubs[0].title}
+            </h3>
+            <div class="space-y-4 flex-1 flex flex-col justify-center">
+              {servicesWithSubs[0].subServices?.map((subService: any) => (
+                <a
+                  href={`/services/${subService.slug}`}
+                  class="text-white flex items-center gap-2 text-sm hover:text-evergreen-primary transition-colors"
+                >
+                  {subService.title}
+                  <Icon name="chevron-right" size={10} class="text-[#44EE5B]" />
+                </a>
+              ))}
+              {showAllServicesLink && (
+                <a
+                  href={`/services/${servicesWithSubs[0].slug}`}
+                  class="text-white hover:text-evergreen-primary transition-colors flex items-center gap-2 text-sm"
+                >
+                  All {servicesWithSubs[0].title} Services
+                  <Icon name="chevron-right" size={10} class="text-[#44EE5B]" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <!-- Professional Services Card -->
+      {professionalCard && (
+        <div class="rounded-2xl overflow-hidden group h-80 bg-black border-evergreen-primary border-2 col-span-2">
+          <div class="inset-0 p-8 flex items-center justify-between">
+            <!-- Left side: Text content -->
+            <div class="flex-1 space-y-4">
+              {professionalCard.title && (
+                <h3 
+                  class="text-white text-3xl font-bold"
+                  set:html={processMarkdown(professionalCard.title, TEXT_STYLES.light)}
+                />
+              )}
+
+              <!-- Feature Badges / Benefits -->
+              {professionalCard.badges && professionalCard.badges.length > 0 && (
+                <div class="flex flex-wrap gap-2 text-white text-sm">
+                  {professionalCard.badges.map((badge: any) => (
+                    <div class="flex items-center gap-2 bg-neutral-950  px-2 py-1 rounded-full">
+                      {badge.icon && <DynamicIcon icon={badge.icon} size={20} class="text-[#44EE5B]" />}
+                      <span>{badge.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <!-- Description -->
+              {professionalCard.description && (
+                <div class="max-w-lg">                
+                  <p set:html={processMarkdown(professionalCard.description, TEXT_STYLES.light)}/>
+</div>
+              )}
+
+              <!-- Button -->
+              {professionalCard.ctaButton?.enabled && (
+                <a
+                  href={professionalCard.ctaButton.link || '/request-service'}
+                  class="inline-block bg-evergreen-primary hover:bg-evergreen-primary/90 text-white px-8 py-3 rounded-full font-bold transition-colors"
+                >
+                  {professionalCard.ctaButton.text || 'Request a Service'}
+                </a>
+              )}
+            </div>
+
+            <!-- Right side: Van image -->
+            {professionalCard.vanImage && (
+              <div class="flex-shrink-0 ml-8">
+                <img
+                  src={API_URL.replace('/api', '') + (typeof professionalCard.vanImage === 'string' ? professionalCard.vanImage : professionalCard.vanImage.url)}
+                  alt="Evergreen Van"
+                  class="w-96 h-auto object-contain"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </section>
+
+    <!-- Segunda fila: Resto de servicios -->
+    {servicesWithSubs.length > 1 && (
+      <section class="flex gap-2">
+        {servicesWithSubs.slice(1).map((service: any) => (
+          <div class="w-xl relative rounded-2xl overflow-hidden group h-80">
+            {service.image && typeof service.image !== "string" && (
+              <img
+                src={API_URL.replace('/api', '') + service.image.url}
+                alt={service.title}
+                class="absolute inset-0 w-full h-full object-cover"
+              />
+            )}
+            <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+            <div class="relative h-full p-6 flex flex-col">
+              <h3 class="text-white text-3xl font-bold mb-auto">
+                {service.title}
+              </h3>
+              <div class="space-y-4 flex-1 flex flex-col justify-center">
+                {service.subServices?.map((subService: any) => (
+                  <a
+                    href={`/services/${subService.slug}`}
+                    class="text-white flex items-center gap-2 text-sm hover:text-evergreen-primary transition-colors"
+                  >
+                    {subService.title}
+                    <Icon name="chevron-right" size={10} class="text-[#44EE5B]" />
+                  </a>
+                ))}
+                {showAllServicesLink && (
+                  <a
+                    href={`/services/${service.slug}`}
+                    class="text-white hover:text-evergreen-primary transition-colors flex items-center gap-2 text-sm font-semibold"
+                  >
+                    All {service.title} Services
+                    <Icon name="chevron-right" size={10} class="text-[#44EE5B]" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+    )}
+  </div>
+
+  <!-- Version Mobile -->
+  <div class="lg:hidden pt-2 overflow-x-hidden">
+    <!-- Professional Services Card Mobile -->
+    {professionalCard && professionalCard.title && (
+      <div class="mb-8 text-center space-y-2 px-4">
+        <h3 
+          set:html={processMarkdown(professionalCard.title)}
+        />
+
+        <!-- Feature Badges / Benefits -->
+        {professionalCard.badges && professionalCard.badges.length > 0 && (
+          <div class="flex justify-center gap-4 text-white text-xs flex-wrap">
+            {professionalCard.badges.map((badge: any) => (
+              <div class="flex items-center gap-1">
+                {badge.icon && <DynamicIcon icon={badge.icon} size={16} class="text-evergreen-primary" />}
+                <span>{badge.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <!-- Description -->
+        {professionalCard.description && (
+          <p class="text-white text-sm leading-relaxed" set:html={processMarkdown(professionalCard.description)}/>
+        )}
+
+        <!-- Van image -->
+        {professionalCard.vanImage && (
+          <div class="flex justify-center px-4">
+            <img
+              src={API_URL.replace('/api', '') + (typeof professionalCard.vanImage === 'string' ? professionalCard.vanImage : professionalCard.vanImage.url)}
+              alt="Evergreen Van"
+              class="w-full max-w-md h-auto object-contain"
+            />
+          </div>
+        )}
+
+        <!-- Buttons -->
+        <div class="flex justify-center gap-3 flex-wrap">
+          {professionalCard.ctaButton?.enabled && (
+            <a
+              href={professionalCard.ctaButton.link || '/request-service'}
+              class="inline-flex items-center justify-center bg-evergreen-primary hover:bg-evergreen-600 text-white px-2 py-2 rounded-full font-bold transition-colors text-sm"
+            >
+              {professionalCard.ctaButton.text || 'Request a Service'}
+            </a>
+          )}
+          {professionalCard.callButton?.enabled && (
+            <a
+              href={phoneLink}
+              class="inline-flex items-center justify-center gap-2 border-2 border-white text-white px-2 py-2 rounded-full font-bold transition-colors text-sm"
+            >
+              <Icon name="phone-add" size={15} />
+              {professionalCard.callButton.text || 'CALL NOW!'}
+            </a>
+          )}
+        </div>
+      </div>
+    )}
+
+    <!-- Services Carousel -->
+    {servicesWithSubs.length > 0 && (
+      <div class="relative px-8 py-0">
+        <!-- Navigation Arrows -->
+        <button
+          id="prev-slide"
+          class="absolute left-0 top-1/2 -translate-y-1/2 bg-transparent text-white p-2 transition-colors z-20"
+          aria-label="Previous slide"
+        >
+          <Icon name="chevron-left" size={15} />
+        </button>
+        <button
+          id="next-slide"
+          class="absolute right-0 top-1/2 -translate-y-1/2 bg-transparent text-white p-2 transition-colors z-20"
+          aria-label="Next slide"
+        >
+          <Icon name="chevron-right" size={15} />
+        </button>
+
+        <!-- Carousel Container -->
+        <div id="services-carousel" class="relative overflow-hidden rounded-2xl">
+          {servicesWithSubs.map((service: any, index: number) => (
+            <div
+              class={`carousel-slide ${index === 0 ? "active" : ""}`}
+              data-slide={index}
+            >
+              <div class="relative h-[250px]">
+                {service.image && typeof service.image !== "string" && (
+                  <img
+                    src={API_URL.replace('/api', '') + service.image.url}
+                    alt={service.title}
+                    class="absolute inset-0 w-full h-full object-cover"
+                  />
+                )}
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                <div class="relative h-full p-6 flex flex-col justify-between">
+                  <h3 class="text-white text-3xl font-bold">{service.title}</h3>
+                  <div class="space-y-3">
+                    {service.subServices?.map((subService: any) => (
+                      <a
+                        href={`/services/${subService.slug}`}
+                        class="text-white flex items-center gap-2 text-base hover:text-evergreen-primary transition-colors"
+                      >
+                        <span>{subService.title}</span>
+                        <Icon name="chevron-right" size={12} />
+                      </a>
+                    ))}
+                    {showAllServicesLink && (
+                      <a
+                        href={`/services/${service.slug}`}
+                        class="text-white hover:text-evergreen-primary transition-colors flex items-center gap-2 text-base font-semibold"
+                      >
+                        All {service.title} Services
+                        <Icon name="chevron-right" size={12} />
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <!-- Dots Indicator -->
+        <div class="flex justify-center gap-2 mt-6 pb-6">
+          {servicesWithSubs.map((_: any, index: number) => (
+            <button
+              class={`carousel-dot w-3 h-3 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+              data-slide={index}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .carousel-slide {
+    display: none;
+  }
+
+  .carousel-slide.active {
+    display: block;
+  }
+</style>
+
+<script>
+  let currentSlide = 0;
+  const slides = document.querySelectorAll(".carousel-slide");
+  const dots = document.querySelectorAll(".carousel-dot");
+  const totalSlides = slides.length;
+
+  if (totalSlides > 0) {
+    function showSlide(index: number) {
+      slides.forEach((slide) => slide.classList.remove("active"));
+      dots.forEach((dot) => {
+        dot.classList.remove("bg-evergreen-primary");
+        dot.classList.add("bg-neutral-600");
+      });
+
+      slides[index].classList.add("active");
+      dots[index].classList.remove("bg-neutral-600");
+      dots[index].classList.add("bg-evergreen-primary");
+    }
+
+    function nextSlide() {
+      currentSlide = (currentSlide + 1) % totalSlides;
+      showSlide(currentSlide);
+    }
+
+    function prevSlide() {
+      currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+      showSlide(currentSlide);
+    }
+
+    document.getElementById("next-slide")?.addEventListener("click", nextSlide);
+    document.getElementById("prev-slide")?.addEventListener("click", prevSlide);
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener("click", () => {
+        currentSlide = index;
+        showSlide(currentSlide);
+      });
+    });
+  }
+</script>

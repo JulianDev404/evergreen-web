@@ -1,0 +1,57 @@
+---
+import HomePage from "../components/HomePage.astro";
+import Layout from "../layouts/Layout.astro";
+// apps/web/src/pages/index.astro
+import Hero from "../components/home/Hero.astro";
+import Services from "../components/home/Services.astro";
+import ChooseYourPlan from "../components/home/ChooseYourPlan.astro";
+import ServiceArea from "../components/home/ServiceArea.astro";
+import WhatWeStandFor from "../components/home/WhatWeStandFor.astro";
+import MembershipFinancing from "../components/home/MembershipFinancing.astro";
+import CustomerFeedback from "../components/home/CustomerFeedback.astro";
+
+// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
+// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+
+const PUBLIC_API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getHomePage = async () => {
+  const res = await fetch(
+    `${PUBLIC_API_URL}/api/globals/homepage?depth=2&draft=false&locale=undefined&trash=false`,
+  );
+  const data = await res.json();
+  return data;
+};
+
+// Destructure sections
+const {
+  hero,
+  servicesSection,
+  chooseYourPlan,
+  values,
+  membership,
+  customerFeedback,
+  seo,
+  schema,
+  whatWeStandFor,
+  showLogos,
+} = await getHomePage();
+---
+
+<Layout>
+  <Hero data={hero} />
+  <Services data={servicesSection} />
+  <ChooseYourPlan data={chooseYourPlan} />
+  <ServiceArea
+    title="Service Area"
+    subtitle="Serving Communities in Rhode Island for Over 17 Years"
+  />
+  <WhatWeStandFor data={whatWeStandFor} />
+  <MembershipFinancing data={membership} />
+  <CustomerFeedback
+    data={customerFeedback}
+    class="bg-neutral-50"
+    showLogos={showLogos}
+    showGoogleRating={true}
+  />
+</Layout>

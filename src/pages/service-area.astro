@@ -1,0 +1,254 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { Icon } from "astro-icon/components";
+import { getImageUrl, processMarkdown } from "../utils/payload";
+import ServiceArea from "../components/home/ServiceArea.astro";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getAboutUsPage = async () => {
+  const res = await fetch(`${API_URL}/api/globals/about-us-page?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getContactPages = async () => {
+  const res = await fetch(`${API_URL}/api/globals/contact-pages?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const getServices = async () => {
+  const res = await fetch(
+    `${API_URL}/api/services?where[isMainService][equals]=true&limit=4&depth=2&sort=order`,
+  );
+  const data = await res.json();
+  return data.docs || [];
+};
+
+const [siteSettings, aboutUsPage, contactPages, services] = await Promise.all([
+  getSiteSettings(),
+  getAboutUsPage(),
+  getContactPages(),
+  getServices(),
+]);
+
+const { company } = siteSettings;
+const { contactForm } = contactPages;
+
+const generateBreadcrumbs = () => {
+  return [
+    { name: "Home", url: "/" },
+    { name: "About Us" },
+    { name: "Our Service Area" },
+  ];
+};
+
+// hardcode service area data
+const serviceArea = {
+  header: {
+    title: "Our Service Area",
+    subtitle: "We cover the entire state of Rhode Island",
+  },
+  showCitiesList: true,
+  mobileColumns: 2,
+  iconSize: {
+    mobile: 24,
+  },
+};
+---
+
+<Layout title="Our Service Area | Evergreen Services" navbarBG={true}>
+  <section class="pt-28 lg:pt-32 bg-white flex flex-col items-center">
+    <!-- Hero Section with Form -->
+    <section
+      class="flex justify-between items-start gap-8 container mx-auto max-w-7xl px-6 mt-12"
+    >
+      <!-- Left Content -->
+      <section
+        class="flex flex-col justify-center items-start gap-8 w-full lg:w-1/2"
+      >
+        <!-- Breadcrumbs -->
+        <section class="flex">
+          <div class="flex items-center gap-2 text-sm text-neutral-secondary">
+            {
+              generateBreadcrumbs().map((breadcrumb, index) => (
+                <span key={breadcrumb.url} class="flex items-center gap-2">
+                  <a href={breadcrumb.url} class="">
+                    {breadcrumb.name}
+                  </a>
+                  {index < generateBreadcrumbs().length - 1 && (
+                    <span class="">&rsaquo;</span>
+                  )}
+                </span>
+              ))
+            }
+          </div>
+        </section>
+
+        <span
+          class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-base font-bold rounded-full"
+        >
+          {aboutUsPage.hero.badge}
+        </span>
+
+        <div class="w-full flex flex-col gap-6">
+          <h2
+            class="text-3xl lg:text-4xl text-[#11BB28] font-bold leading-tight"
+          >
+            {aboutUsPage.hero.mainTitle}
+          </h2>
+          <p class="text-neutral-700 text-base leading-relaxed">
+            {aboutUsPage.hero.introParagraph}
+          </p>
+
+          <h3
+            class="text-3xl lg:text-4xl text-[#11BB28] font-bold leading-tight mt-4"
+          >
+            {aboutUsPage.hero.secondaryTitle}
+          </h3>
+          <p class="text-neutral-700 text-base leading-relaxed">
+            {aboutUsPage.hero.secondaryParagraph}
+          </p>
+
+          <!-- Features -->
+          {
+            aboutUsPage.features?.map((feature: any) => (
+              <div class="flex flex-col gap-3">
+                <span class="bg-[#042F0A] text-[#44EE5B] border border-[#44EE5B] px-4 py-2 text-base font-bold rounded-full w-fit">
+                  {feature.badge}
+                </span>
+                <p class="text-neutral-700 text-base leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+      </section>
+
+      <!-- Right Sidebar - Form + Image -->
+      <section
+        class="hidden lg:flex flex-col items-center justify-start gap-6 w-1/3"
+      >
+        <!-- Contact Form -->
+        <div
+          class="rounded-3xl overflow-hidden border-2 border-neutral-300 p-6 w-full bg-white shadow-sm"
+        >
+          <div class="flex justify-center mb-6">
+            <img
+              src={getImageUrl(company.logoAlt)}
+              alt={company.companyName}
+              class="h-12 w-auto"
+            />
+          </div>
+
+          <form id="contact-form-desktop" class="space-y-4 px-4">
+            <div>
+              <label class="text-black text-sm mb-2 block font-medium">
+                First Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="firstName"
+                placeholder="e.g., John"
+                required
+                class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block font-medium">
+                Last Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="lastName"
+                placeholder="e.g., Smith"
+                required
+                class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block font-medium">
+                Email <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                name="email"
+                placeholder="e.g., john.smith@email.com"
+                required
+                class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block font-medium">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phoneNumber"
+                placeholder="e.g., (401) 293-2048"
+                required
+                class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary text-sm"
+              />
+            </div>
+            <div>
+              <label class="text-black text-sm mb-2 block font-medium">
+                How we can help you <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="message"
+                placeholder="Tell us a bit about what you need, and we'll get back to you shortly."
+                required
+                rows="3"
+                class="w-full px-4 py-2.5 rounded-lg bg-white border border-neutral-300 text-black placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-evergreen-primary text-sm resize-none"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-semibold text-base transition-colors"
+            >
+              {contactForm.submitText}
+            </button>
+          </form>
+        </div>
+
+        <!-- Sidebar Image -->
+        {
+          aboutUsPage.sidebarImage?.image && (
+            <img
+              src={getImageUrl(aboutUsPage.sidebarImage.image)}
+              alt="Our Team"
+              class="w-full rounded-2xl object-cover shadow-sm"
+            />
+          )
+        }
+
+        <section>
+          <span class="font-bold text-xl text-center block mb-4"
+            >Don't see your area?</span
+          >
+          <div
+            class="w-fit bg-evergreen-primary rounded-t-3xl px-14 py-2 shadow-md z-30"
+          >
+            <h2 class="text-white text-2xl font-bold">
+              CALL NOW (401) 293-2048
+            </h2>
+          </div>
+        </section>
+      </section>
+    </section>
+
+    <ServiceArea
+      title="Cities We Serve"
+      subtitle="Serving Communities in Rhode Island for Over 17 Years"
+    />
+  </section>
+</Layout>

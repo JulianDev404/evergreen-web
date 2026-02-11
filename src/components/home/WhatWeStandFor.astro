@@ -1,0 +1,263 @@
+---
+// apps/web/src/components/WhatWeStandFor.astro
+import { Icon } from "astro-icon/components";
+import { getPayload } from "payload";
+import config from "evergreen-payload";
+import { getImageUrl } from "../../utils/payload";
+import DynamicIcon from "../DynamicIcon.astro";
+
+interface Props {
+  data: any;
+}
+
+const { data } = Astro.props;
+
+if (!data?.enabled) {
+  return null;
+}
+
+const { title = "What We Stand For", values = [], vanImage } = data;
+
+// Si no hay valores, no renderizar
+if (!values || values.length === 0) {
+  return null;
+}
+
+// Obtener URL de imagen si existe
+const vanImageUrl = vanImage ? getImageUrl(vanImage) : null;
+---
+
+<section class="bg-black">
+  <!-- Van Image with Gradient Overlays -->
+  {vanImageUrl && (
+    <div class="relative h-[400px] md:h-[600px] lg:h-[800px]">
+      <img
+        src={vanImageUrl}
+        alt="Evergreen Services Van"
+        class="w-full h-full object-cover"
+      />
+
+      <!-- Degradado de arriba hacia abajo (transición desde Service Area) -->
+      <div
+        class="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-black to-transparent pointer-events-none"
+      >
+      </div>
+
+      <!-- Degradado de abajo hacia arriba (transición hacia contenido negro) -->
+      <div
+        class="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-black via-black/60 to-transparent pointer-events-none"
+      >
+      </div>
+    </div>
+  )}
+
+  <!-- Content Section - FUERA de la imagen, en fondo negro -->
+  <div class="bg-black py-8 lg:py-16">
+    <div class="container mx-auto px-4">
+      <!-- Title -->
+      <div class="text-center mb-8 lg:mb-12">
+        <h2 class="text-3xl lg:text-6xl font-bold text-evergreen-primary">
+          {title}
+        </h2>
+      </div>
+
+      <!-- Desktop Version - Grid -->
+      <div class="hidden lg:grid grid-cols-3 gap-6 max-w-7xl mx-auto">
+        {
+          values.map((value: any) => (
+            <div class="value-card group bg-black rounded-2xl p-6 relative overflow-hidden">
+              {/* Borde con gradiente */}
+              <div class="value-card-border" />
+
+              {/* Contenido */}
+              <div class="relative z-10 flex items-start gap-4">
+                {/* ICON CONTAINER */}
+                <div class="text-neutral-700 group-hover:text-[#44EE5B] transition-colors flex-shrink-0">
+                  {value.icon && <DynamicIcon icon={value.icon} size={32} />}
+                </div>
+
+                {/* TEXT */}
+                <div>
+                  <h3 class="text-neutral-400 group-hover:text-white text-xl font-bold mb-2 transition-colors">
+                    {value.title}
+                  </h3>
+                  <p class="text-neutral-400 group-hover:text-neutral-300 text-xl font-normal transition-colors">
+                    {value.description}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+
+      <!-- Mobile Version - Carousel -->
+      <div class="lg:hidden relative px-12">
+        <!-- Navigation Arrows -->
+        <button
+          id="prev-value"
+          class="absolute -left-2 top-1/2 -translate-y-1/2 bg-transparent text-white p-2 transition-colors z-20"
+          aria-label="Previous value"
+        >
+          <Icon name="chevron-left" size={24} />
+        </button>
+        <button
+          id="next-value"
+          class="absolute -right-2 top-1/2 -translate-y-1/2 bg-transparent text-white p-2 transition-colors z-20"
+          aria-label="Next value"
+        >
+          <Icon name="chevron-right" size={24} />
+        </button>
+
+        <!-- Carousel Container -->
+        <div id="values-carousel" class="relative overflow-hidden rounded-2xl">
+          {
+            values.map((value: any, index: number) => (
+              <div
+                class={`value-slide ${index === 0 ? "active" : ""}`}
+                data-slide={index}
+              >
+                <div class="value-card-mobile bg-black rounded-2xl p-4 relative overflow-hidden">
+                  {/* Borde con gradiente para mobile */}
+                  <div class="value-card-border-mobile" />
+
+                  {/* Contenido */}
+                  <div class="relative z-10 flex items-start gap-4">
+                    {/* ICON */}
+                    <div class="text-evergreen-primary flex-shrink-0">
+                      {value.icon && <DynamicIcon icon={value.icon} size={32} />}
+                    </div>
+
+                    {/* TEXT */}
+                    <div>
+                      <h3 class="text-white text-lg font-bold">
+                        {value.title}
+                      </h3>
+                      <p class="text-neutral-300 text-md">
+                        {value.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        <!-- Dots Indicator -->
+        <div class="flex justify-center gap-2 mt-6">
+          {
+            values.map((_: any, index: number) => (
+              <button
+                class={`value-dot w-3 h-3 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+                data-slide={index}
+                aria-label={`Go to value ${index + 1}`}
+              />
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Desktop Cards */
+  .value-card {
+    position: relative;
+    border: 1px solid #404040;
+    border-radius: 1rem;
+    transition: border-color 0.3s ease;
+  }
+
+  .value-card:hover {
+    border-color: transparent;
+  }
+
+  .value-card-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 1px;
+    background: linear-gradient(135deg, #73f284 0%, #0fa623 100%);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .value-card:hover .value-card-border {
+    opacity: 1;
+  }
+
+  /* Mobile Cards - siempre visible */
+  .value-card-mobile {
+    position: relative;
+  }
+
+  .value-card-border-mobile {
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 1px;
+    background: linear-gradient(135deg, #73f284 0%, #0fa623 100%);
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 1;
+  }
+
+  .value-slide {
+    display: none;
+  }
+
+  .value-slide.active {
+    display: block;
+  }
+</style>
+
+<script>
+  let currentValue = 0;
+  const valueSlides = document.querySelectorAll(".value-slide");
+  const valueDots = document.querySelectorAll(".value-dot");
+  const totalValues = valueSlides.length;
+
+  if (totalValues > 0) {
+    function showValue(index: number) {
+      valueSlides.forEach((slide) => slide.classList.remove("active"));
+      valueDots.forEach((dot) => {
+        dot.classList.remove("bg-evergreen-primary");
+        dot.classList.add("bg-neutral-600");
+      });
+
+      valueSlides[index].classList.add("active");
+      valueDots[index].classList.remove("bg-neutral-600");
+      valueDots[index].classList.add("bg-evergreen-primary");
+    }
+
+    function nextValue() {
+      currentValue = (currentValue + 1) % totalValues;
+      showValue(currentValue);
+    }
+
+    function prevValue() {
+      currentValue = (currentValue - 1 + totalValues) % totalValues;
+      showValue(currentValue);
+    }
+
+    document.getElementById("next-value")?.addEventListener("click", nextValue);
+    document.getElementById("prev-value")?.addEventListener("click", prevValue);
+
+    valueDots.forEach((dot, index) => {
+      dot.addEventListener("click", () => {
+        currentValue = index;
+        showValue(currentValue);
+      });
+    });
+  }
+</script>

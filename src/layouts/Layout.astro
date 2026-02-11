@@ -1,0 +1,58 @@
+---
+import "../styles/global.css";
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+import ChatButton from "../components/ChatButton.astro";
+import RecaptchaScript from "../components/RecaptchaScript.astro";
+import { getImageUrl } from "@/utils/payload";
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  schema?: string;
+  navbarBG?: boolean;
+}
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const siteSettings = await getSiteSettings();
+
+const {
+  title = "Evergreen Services",
+  description = "Professional home services you can trust",
+  navbarBG = false,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link
+      rel="icon"
+      type={siteSettings?.company?.favicon?.mimeType || "image/x-icon"}
+      href={siteSettings?.company?.favicon
+        ? getImageUrl(siteSettings.company.favicon)
+        : "/favicon.ico"}
+    />
+    <RecaptchaScript />
+  </head>
+  <body class="min-h-screen flex flex-col bg-white">
+    <Navbar navbarBG={navbarBG} />
+    <main class="flex-1 bg-black overflow-hidden">
+      <slot />
+    </main>
+    <Footer />
+    <!-- <ChatButton /> -->
+  </body>
+</html>

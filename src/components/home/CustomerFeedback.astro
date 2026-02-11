@@ -1,0 +1,444 @@
+---
+import { Icon } from "astro-icon/components";
+
+import GoogleLogo from "../../assets/google-logo.png";
+import UserPhoto from "../../assets/user-1.jpg";
+
+import LogoAmanaGoodman from "../../assets/logo-amana-goodman.png";
+import LogoAngiesList from "../../assets/logo-angies-list.png";
+import LogoAOSmith from "../../assets/logo-ao-smith.png";
+import LogoBBB from "../../assets/logo-bbb-accredited-business.png";
+import LogoDaikin from "../../assets/logo-daikin.png";
+import LogoIBC from "../../assets/logo-ibc.png";
+import LogoLennoxInternational from "../../assets/logo-lennox-international.png";
+import LogoMitsubishiElectric from "../../assets/logo-mitsubishi-electric.png";
+import LogoTriangleTube from "../../assets/logo-triangle-tube.png";
+import { getImageUrl } from "@/utils/payload";
+
+// props
+const { class: className, showLogos, textStyle, showGoogleRating } = Astro.props;
+const googleRating = "4.9";
+const totalReviews = "513";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const fetchWithRetry = async (url: string, retries = 3, delay = 1000) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return await res.json();
+    } catch (error) {
+      console.error(`Attempt ${i + 1} failed for ${url}:`, error);
+      if (i < retries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+};
+
+const getReviews = async () => {
+  try {
+    const data = await fetchWithRetry(
+      `${API_URL}/api/reviews?where[active][equals]=true&sort=order&limit=20&depth=1`,
+    );
+    return data.docs || [];
+  } catch (error) {
+    console.error("Error fetching reviews:", error);
+    return [];
+  }
+};
+
+const getLogos = async () => {
+   try {
+    const data = await fetchWithRetry(
+      `${API_URL}/api/logos`,
+    );
+    return data.docs || [];
+  } catch (error) {
+    console.error("Error fetching logos:", error);
+    return [];
+  }
+}
+
+
+const [reviews, logos] = await await Promise.all([
+  getReviews(),
+  getLogos(),
+])
+
+---
+
+<section class={`flex flex-col items-center py-16 px-4 gap-6 ${className}`}>
+  <h2 class={`text-4xl md:text-5xl font-bold text-center mb-12 ${textStyle}`}>
+    Customer Feedback
+  </h2>
+
+
+  {showGoogleRating && (
+    <div class="w-full max-w-7xl space-y-6">
+    <div
+      class=" w-full justify-between items-center bg-white border border-neutral-200 rounded-xl px-4 py-2 shadow-lg google-rating hidden lg:flex"
+    >
+      <div class="flex items-center gap-2">
+        <img
+          src={GoogleLogo.src}
+          alt="Google Logo"
+          class="w-12 h-12 object-contain"
+        />
+        <div class="flex">
+          <Icon name="star-yellow" size={18} />
+          <Icon name="star-yellow" size={18} />
+          <Icon name="star-yellow" size={18} />
+          <Icon name="star-yellow" size={18} />
+          <Icon name="star-yellow" size={18} />
+        </div>
+        <span class="text-neutral-500 text-xs">
+          {googleRating} | {totalReviews} reviews
+        </span>
+      </div>
+      <div>
+        <a
+          href="#"
+          class="text-bold font-medium text-sm border border-neutral-300 rounded-md px-2 py-1"
+        >
+          Write a review
+        </a>
+      </div>
+    </div>
+  </div>
+  )}
+  <!-- Desktop Version -->
+  <div class="hidden lg:block w-full max-w-7xl">
+    <!-- Reviews Grid - Desktop muestra 4 -->
+    <div class="grid grid-cols-4 gap-6 mb-16">
+      {
+        reviews.slice(0, 4).map((review) => (
+          <div class="relative bg-white border-2 border-blue-200 rounded-xl p-6 shadow-lg flex flex-col gap-4 overflow-hidden">
+            {/* Gradient en la esquina superior izquierda */}
+            <div class="absolute top-0 left-0 w-24 h-24 bg-gradient-to-br from-pink-100 via-white to-transparent rounded-br-full opacity-60" />
+
+            {/* Header */}
+            <div class="flex items-center justify-between relative z-10">
+              <div class="flex gap-3 items-center">
+                <img
+                  src={getImageUrl(review.photo)}
+                  alt={review.name}
+                  class="w-12 h-12 rounded-full object-cover"
+                />
+                <div class="flex flex-col">
+                  <p class="text-black font-semibold text-sm">{review.name}</p>
+                  <span class="text-neutral-500 text-xs">{review.date}</span>
+                </div>
+              </div>
+              <Icon name="google-icon" size={28} />
+            </div>
+
+            {/* Stars */}
+            <div class="flex items-center gap-1 relative z-10">
+              {Array.from({ length: 5 }).map(() => (
+                <Icon name="star-yellow" size={18} />
+              ))}
+            </div>
+
+            {/* Review Text */}
+            <p class="text-neutral-700 text-sm leading-relaxed relative z-10">
+              {review.text}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- Mobile Version - Carousel -->
+  <div class="lg:hidden w-full max-w-md mb-16">
+    <div class="relative px-8">
+      <!-- Left Arrow -->
+      <button
+        id="prev-review"
+        class="absolute left-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full border border-neutral-300 bg-white hover:bg-neutral-50 transition-colors z-10"
+        aria-label="Previous review"
+      >
+        <Icon name="arrow-left" size={20} />
+      </button>
+
+      <!-- Right Arrow -->
+      <button
+        id="next-review"
+        class="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full border border-neutral-300 bg-white hover:bg-neutral-50 transition-colors z-10"
+        aria-label="Next review"
+      >
+        <Icon name="arrow-right" size={20} />
+      </button>
+
+      <!-- Carousel Container -->
+      <div id="reviews-carousel" class="relative overflow-hidden">
+        {
+          reviews.map((review, index) => (
+            <div
+              class={`review-slide ${index === 0 ? "active" : ""}`}
+              data-slide={index}
+            >
+              <div class="relative bg-white border-2 border-blue-200 rounded-2xl p-6 shadow-lg aspect-square flex flex-col overflow-hidden">
+                {/* Gradient en la esquina superior izquierda */}
+                <div class="absolute top-0 left-0 w-32 h-32 bg-gradient-to-br from-pink-100 via-white to-transparent rounded-br-full opacity-60" />
+
+                {/* Header */}
+                <div class="flex items-center justify-between mb-3 relative z-10">
+                  <div class="flex gap-3 items-center">
+                    <img
+                      src={getImageUrl(review.photo)}
+                      alt={review.name}
+                      class="w-12 h-12 rounded-full object-cover"
+                    />
+                    <div class="flex flex-col">
+                      <p class="text-black font-semibold text-base">
+                        {review.name}
+                      </p>
+                      <span class="text-neutral-500 text-sm">
+                        {review.date}
+                      </span>
+                    </div>
+                  </div>
+                  <Icon name="google-icon" size={28} />
+                </div>
+
+                {/* Stars */}
+                <div class="flex items-center gap-1 mb-1 relative z-10">
+                  {Array.from({ length: 5 }).map(() => (
+                    <Icon name="star-yellow" size={20} />
+                  ))}
+                </div>
+
+                {/* Review Text */}
+                <p class="text-neutral-700 text-base leading-relaxed flex-1 overflow-hidden line-clamp-8 relative z-10">
+                  {review.text}
+                </p>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Dots Indicator -->
+    <div class="flex justify-center gap-2 mt-8">
+      {
+        reviews.map((_, index) => (
+          <button
+            class={`review-dot w-3 h-3 rounded-full transition-colors ${index === 0 ? "bg-neutral-800" : "bg-neutral-300"}`}
+            data-slide={index}
+            aria-label={`Go to review ${index + 1}`}
+          />
+        ))
+      }
+    </div>
+  </div>
+
+  <!-- Brand Logos -->
+  {showLogos && (
+    <div class="w-full max-w-7xl px-4">
+    <!-- Desktop: 2 filas de 4 logos (4x2) -->
+    <div class="hidden lg:block space-y-16">
+      <!-- Primera fila: 4 logos -->
+      <div class="flex items-center justify-between px-12">
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoAngiesList.src}
+            alt="Angie's List"
+            class="max-h-20 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoAOSmith.src}
+            alt="AO Smith"
+            class="max-h-14 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoBBB.src}
+            alt="BBB A+ Rating"
+            class="max-h-20 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoDaikin.src}
+            alt="Daikin"
+            class="max-h-12 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoAmanaGoodman.src}
+            alt="Amana Goodman"
+            class="max-h-20 max-w-full w-auto object-contain"
+          />
+        </div>
+      </div>
+
+      <!-- Segunda fila: 4 logos (centrados con 1 logo extra invisible para mantener espaciado) -->
+      <div class="flex items-center justify-center gap-24">
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoIBC.src}
+            alt="IBC"
+            class="max-h-20 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoLennoxInternational.src}
+            alt="Lennox"
+            class="max-h-16 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoMitsubishiElectric.src}
+            alt="Mitsubishi Electric"
+            class="max-h-14 max-w-full w-auto object-contain"
+          />
+        </div>
+        <div class="flex items-center justify-center h-24 w-48">
+          <img
+            src={LogoTriangleTube.src}
+            alt="Triangle Tube"
+            class="max-h-16 max-w-full w-auto object-contain"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile: Grid 3x3 -->
+    <div
+      class="lg:hidden grid grid-cols-3 gap-x-4 gap-y-8 items-center justify-items-center px-8"
+    >
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoAngiesList.src}
+          alt="Angie's List"
+          class="max-h-16 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoAOSmith.src}
+          alt="AO Smith"
+          class="max-h-10 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoBBB.src}
+          alt="BBB A+ Rating"
+          class="max-h-12 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoDaikin.src}
+          alt="Daikin"
+          class="max-h-8 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoAmanaGoodman.src}
+          alt="Amana Goodman"
+          class="max-h-12 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoIBC.src}
+          alt="IBC"
+          class="max-h-12 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoLennoxInternational.src}
+          alt="Lennox"
+          class="max-h-10 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoMitsubishiElectric.src}
+          alt="Mitsubishi Electric"
+          class="max-h-10 w-auto object-contain"
+        />
+      </div>
+      <div class="flex items-center justify-center h-16">
+        <img
+          src={LogoTriangleTube.src}
+          alt="Triangle Tube"
+          class="max-h-10 w-auto object-contain"
+        />
+      </div>
+    </div>
+  </div>
+  )}
+</section>
+
+<style>
+  .review-slide {
+    display: none;
+  }
+
+  .review-slide.active {
+    display: block;
+  }
+
+  .google-rating {
+    background: linear-gradient(128.97deg, #FFD8F7 -24.8%, #FFFFFF 6.17%, #FFFFFF 68.73%, #d6e7ff8e 135.26%);
+
+  }
+</style>
+
+<script>
+  let currentReview = 0;
+  const reviewSlides = document.querySelectorAll(".review-slide");
+  const reviewDots = document.querySelectorAll(".review-dot");
+  const totalReviews = reviewSlides.length;
+
+  function showReview(index: number) {
+    reviewSlides.forEach((slide) => slide.classList.remove("active"));
+    reviewDots.forEach((dot) => {
+      dot.classList.remove("bg-neutral-800");
+      dot.classList.add("bg-neutral-300");
+    });
+
+    reviewSlides[index].classList.add("active");
+    reviewDots[index].classList.remove("bg-neutral-300");
+    reviewDots[index].classList.add("bg-neutral-800");
+  }
+
+  function nextReview() {
+    currentReview = (currentReview + 1) % totalReviews;
+    showReview(currentReview);
+  }
+
+  function prevReview() {
+    currentReview = (currentReview - 1 + totalReviews) % totalReviews;
+    showReview(currentReview);
+  }
+
+  document.getElementById("next-review")?.addEventListener("click", nextReview);
+  document.getElementById("prev-review")?.addEventListener("click", prevReview);
+
+  reviewDots.forEach((dot, index) => {
+    dot.addEventListener("click", () => {
+      currentReview = index;
+      showReview(currentReview);
+    });
+  });
+</script>

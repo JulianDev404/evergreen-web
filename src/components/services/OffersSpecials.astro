@@ -1,0 +1,735 @@
+---
+import { Icon } from "astro-icon/components";
+import { getImageUrl } from "../../utils/payload";
+
+interface OfferCard {
+  image: {
+    url: string;
+  };
+  imageAlt?: string;
+  category: string;
+  // Price display options
+  priceType: "standard" | "off" | "value" | "financing";
+  originalPrice?: string;
+  price: string;
+  priceLabel?: string; // e.g., "Value", "OFF", "x 1 Year"
+  // Limited time badge
+  limitedTimeOffer?: boolean;
+  // Content
+  title: string;
+  subtitle?: string;
+  highlightedText?: string; // Orange highlighted text
+  disclaimer?: string;
+  featuresTitle: string;
+  featuresSubtitle: string;
+  features: {
+    title: string;
+  }[];
+  ctaText: string;
+  ctaLink?: string;
+  ctaPhone?: string;
+}
+
+interface Props {
+  heading?: string;
+  offers: OfferCard[];
+  disclaimer?: string;
+}
+
+const {
+  heading = "Offers & Service Specials",
+  offers = [],
+  disclaimer = "* Call for Conditions & Restrictions / Present Coupon at Time of Service / Not Available to Combine with Other Offers. Offer must be presented to Techs before any work begins. *",
+} = Astro.props;
+
+// No mostrar la sección si no hay ofertas
+if (!offers || offers.length === 0) {
+  return null;
+}
+---
+
+<section id="offers" class="bg-black py-12 lg:py-16 relative">
+  <!-- Header -->
+  <div class="container mx-auto px-6 lg:px-16 mb-8 lg:mb-12">
+    <h2 class="text-white text-2xl lg:text-4xl font-bold text-center">
+      {heading}
+    </h2>
+  </div>
+
+  <!-- Desktop: Carousel with side arrows -->
+  <div class="hidden lg:block relative">
+    <!-- Navigation Arrows - Outside the container -->
+    {
+      offers.length > 2 && (
+        <>
+          <button
+            type="button"
+            class="offers-desktop-prev absolute left-4 xl:left-8 top-1/2 -translate-y-1/2 z-10 w-10 h-10 hover:bg-white/10 cursor-pointer rounded-full flex items-center justify-center transition-colors"
+            aria-label="Previous offers"
+          >
+            <Icon name="chevron-left" size={24} class="text-white" />
+          </button>
+          <button
+            type="button"
+            class="offers-desktop-next absolute right-4 xl:right-8 top-1/2 -translate-y-1/2 z-10 w-10 h-10 hover:bg-white/10 cursor-pointer rounded-full flex items-center justify-center transition-colors"
+            aria-label="Next offers"
+          >
+            <Icon name="chevron-right" size={24} class="text-white" />
+          </button>
+        </>
+      )
+    }
+
+    <div class="container mx-auto px-16 xl:px-24">
+      <div class="offers-desktop-carousel overflow-hidden">
+        <div
+          class="offers-desktop-track flex transition-transform duration-300 ease-in-out"
+        >
+          {
+            offers.map((offer, index) => (
+              <div class="offers-desktop-slide flex-shrink-0 w-1/2 px-4">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-lg h-full flex flex-col">
+                  {/* Image Header */}
+                  <div class="relative h-56">
+                    <img
+                      src={getImageUrl(offer.image)}
+                      alt={offer.imageAlt || offer.title}
+                      class="w-full h-full object-cover"
+                    />
+                    {/* Gradient overlay */}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                    {/* Price Badge - Top Right */}
+                    <div class="absolute top-4 left-4 flex items-center gap-2">
+                      {/* Limited Time Offer badge */}
+                      {offer.limitedTimeOffer && offer.priceType === "off" && (
+                        <div class="bg-[#042F0A] border border-[#44EE5B] text-[#44EE5B] text-lg font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                          <Icon name="circle-star" size={14} />
+                          <span>Limited Time Offer</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div class="absolute top-4 right-4 flex items-center gap-2">
+                      {offer.priceType === "standard" && (
+                        <div class="bg-neutral-900 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                          {offer.originalPrice && (
+                            <span class="text-sm text-neutral-400 line-through">
+                              ${offer.originalPrice}
+                            </span>
+                          )}
+                          <span class="text-[#44EE5B] text-3xl font-bold ">
+                            ${offer.price}
+                          </span>
+                        </div>
+                      )}
+
+                      {offer.priceType === "off" && (
+                        <div class="bg-neutral-900 text-white px-4 py-2 rounded-full shadow-lg">
+                          <span class="text-[#44EE5B] text-2xl font-bold ">
+                            ${offer.price}
+                          </span>
+                          <span class="text-[#44EE5B] text-lg font-bold  ml-1">
+                            {offer.priceLabel || "OFF"}
+                          </span>
+                        </div>
+                      )}
+
+                      {offer.priceType === "value" && (
+                        <div class="relative">
+                          <div class="bg-evergreen-primary text-white px-4 py-2 rounded-lg shadow-lg">
+                            <span class="text-white text-2xl font-bold ">
+                              ${offer.price}
+                            </span>
+                            <span class="text-white text-lg font-bold  ml-1">
+                              {offer.priceLabel || "Value"}
+                            </span>
+                          </div>
+                          {/* Rainbow stripe decoration */}
+                          <div class="absolute -right-1 top-0 bottom-0 w-2 overflow-hidden rounded-r-lg">
+                            <div
+                              class="h-full w-full"
+                              style="background: linear-gradient(180deg, #FF0000 0%, #FF7F00 20%, #FFFF00 40%, #00FF00 60%, #0000FF 80%, #8B00FF 100%);"
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {offer.priceType === "financing" && (
+                        <div class="bg-neutral-900 text-[#44EE5B] text-2xl font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
+                          <span>${offer.price}</span>
+                          <span>{offer.priceLabel || "x 1 Year"}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Category label - Bottom Left on image */}
+                    <div class="absolute bottom-4 left-6">
+                      <span class="text-white text-xl font-bold drop-shadow-lg">
+                        {offer.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div class="p-6 lg:p-8 flex-1 flex flex-col">
+                    <h3 class="text-black text-xl lg:text-2xl font-bold mb-2 leading-tight">
+                      {offer.title}
+                    </h3>
+
+                    {offer.subtitle && (
+                      <p class="text-black text-base mb-3">{offer.subtitle}</p>
+                    )}
+
+                    {offer.disclaimer && (
+                      <p class="text-neutral-700 text-xs inline-block bg-[#E5E5E5] rounded-full px-3 py-1.5 mb-4 uppercase tracking-wide font-bold w-fit">
+                        {offer.disclaimer}
+                      </p>
+                    )}
+
+                    <div class="mb-4 flex-1">
+                      <h4 class="text-evergreen-primary text-sm font-bold uppercase mb-3">
+                        {offer.featuresTitle}
+                      </h4>
+
+                      {/* Highlighted text (orange) - opcional */}
+                      {offer.highlightedText && (
+                        <p class="text-[#FF6B35] text-sm font-semibold mb-3">
+                          {offer.highlightedText}
+                        </p>
+                      )}
+
+                      <ul class="space-y-2">
+                        {offer.features?.slice(0, 4).map((feature) => (
+                          <li class="flex items-start gap-2">
+                            <div class="flex-shrink-0 mt-0.5">
+                              <Icon
+                                name="check-circle"
+                                size={18}
+                                class="text-evergreen-primary"
+                              />
+                            </div>
+                            <span class="text-neutral-700 text-sm leading-relaxed">
+                              {feature.title}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {offer.features && offer.features.length > 4 && (
+                        <button
+                          data-modal-trigger={`modal-${index}`}
+                          class="text-evergreen-primary text-sm font-semibold mt-2 hover:underline"
+                        >
+                          ...more
+                        </button>
+                      )}
+                    </div>
+
+                    <a
+                      href={
+                        offer.ctaPhone
+                          ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+                          : offer.ctaLink || "#"
+                      }
+                      class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 rounded-full transition-colors text-center text-sm shadow-lg uppercase tracking-wide"
+                    >
+                      {offer.ctaText} {offer.ctaPhone}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop Dots -->
+    {
+      offers.length > 2 && (
+        <div class="flex justify-center gap-2 mt-8">
+          {Array.from({ length: Math.ceil(offers.length / 2) }).map(
+            (_, index) => (
+              <button
+                type="button"
+                class={`offers-desktop-dot w-3 h-3 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+                data-index={index}
+                aria-label={`Go to page ${index + 1}`}
+              />
+            ),
+          )}
+        </div>
+      )
+    }
+  </div>
+
+  <!-- Mobile: Carousel with dots (no arrows per design) -->
+  <div class="lg:hidden relative">
+    <div class="offers-mobile-carousel overflow-hidden">
+      <div
+        class="offers-mobile-track flex transition-transform duration-300 ease-in-out"
+      >
+        {
+          offers.map((offer, index) => (
+            <div class="offers-mobile-slide w-full flex-shrink-0 px-4">
+              <div class="bg-white rounded-2xl overflow-hidden shadow-lg mx-auto max-w-sm">
+                {/* Image Header */}
+                <div class="relative h-48">
+                  <img
+                    src={getImageUrl(offer.image)}
+                    alt={offer.imageAlt || offer.title}
+                    class="w-full h-full object-cover"
+                  />
+                  {/* Gradient overlay */}
+                  <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+                  {/* Price Badge - Top Right */}
+                  <div class="absolute top-3 left-3 flex items-center gap-2">
+                    {/* Limited Time Offer badge */}
+                    {offer.limitedTimeOffer && offer.priceType === "off" && (
+                      <div class="bg-[#042F0A] border border-[#44EE5B] px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5 text-[#44EE5B] text-sm font-bold">
+                        <Icon name="circle-star" size={10} />
+                        <span>Limited Time Offer</span>
+                      </div>
+                    )}
+                  </div>
+                  <div class="absolute top-3 right-3 flex items-center gap-2">
+                    {offer.priceType === "standard" && (
+                      <div class="bg-neutral-900 text-white px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1.5">
+                        {offer.originalPrice && (
+                          <span class="text-xs text-neutral-400 line-through">
+                            ${offer.originalPrice}
+                          </span>
+                        )}
+                        <span class="text-[#44EE5B] text-xl font-bold ">
+                          ${offer.price}
+                        </span>
+                      </div>
+                    )}
+
+                    {offer.priceType === "off" && (
+                      <div class="bg-neutral-900 text-white px-3 py-1.5 rounded-full shadow-lg">
+                        <span class="text-[#44EE5B] text-xl font-bold ">
+                          ${offer.price}
+                        </span>
+                        <span class="text-[#44EE5B] text-sm font-bold  ml-1">
+                          {offer.priceLabel || "OFF"}
+                        </span>
+                      </div>
+                    )}
+
+                    {offer.priceType === "value" && (
+                      <div class="relative">
+                        <div class="bg-evergreen-primary text-white px-3 py-1.5 rounded-lg shadow-lg">
+                          <span class="text-white text-xl font-bold ">
+                            ${offer.price}
+                          </span>
+                          <span class="text-white text-sm font-bold  ml-1">
+                            {offer.priceLabel || "Value"}
+                          </span>
+                        </div>
+                        {/* Rainbow stripe */}
+                        <div class="absolute -right-0.5 top-0 bottom-0 w-1.5 overflow-hidden rounded-r-lg">
+                          <div
+                            class="h-full w-full"
+                            style="background: linear-gradient(180deg, #FF0000 0%, #FF7F00 20%, #FFFF00 40%, #00FF00 60%, #0000FF 80%, #8B00FF 100%);"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {offer.priceType === "financing" && (
+                      <div class="bg-neutral-900 px-3 py-1.5 rounded-lg shadow-lg text-[#44EE5B] text-xl font-bold">
+                        <span>${offer.price}</span>
+                        <span class="text-sm ml-1">
+                          {offer.priceLabel || "x 1 Year"}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category label - Bottom Left */}
+                  <div class="absolute bottom-3 left-4">
+                    <span class="text-white text-lg font-bold drop-shadow-lg">
+                      {offer.category}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Content */}
+                {/* Content */}
+                <div class="p-6 lg:p-8 flex-1 flex flex-col">
+                  <h3 class="text-black text-xl lg:text-2xl font-bold mb-2 leading-tight">
+                    {offer.title}
+                  </h3>
+
+                  {offer.subtitle && (
+                    <p class="text-black text-base mb-3">{offer.subtitle}</p>
+                  )}
+
+                  {offer.disclaimer && (
+                    <p class="text-neutral-700 text-xs inline-block bg-[#E5E5E5] rounded-full px-3 py-1.5 mb-4 uppercase tracking-wide font-bold w-fit">
+                      {offer.disclaimer}
+                    </p>
+                  )}
+
+                  <div class="mb-4 flex-1">
+                    <h4 class="text-evergreen-primary text-sm font-bold uppercase mb-3">
+                      {offer.featuresTitle}
+                    </h4>
+
+                    {/* Highlighted text (orange) - opcional */}
+                    {offer.highlightedText && (
+                      <p class="text-[#FF6B35] text-sm font-semibold mb-3">
+                        {offer.highlightedText}
+                      </p>
+                    )}
+
+                    <ul class="space-y-2">
+                      {offer.features?.slice(0, 4).map((feature) => (
+                        <li class="flex items-start gap-2">
+                          <div class="flex-shrink-0 mt-0.5">
+                            <Icon
+                              name="check-circle"
+                              size={18}
+                              class="text-evergreen-primary"
+                            />
+                          </div>
+                          <span class="text-neutral-700 text-sm leading-relaxed">
+                            {feature.title}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {offer.features && offer.features.length > 4 && (
+                      <button
+                        data-modal-trigger={`modal-${index}`}
+                        class="text-evergreen-primary text-sm font-semibold mt-2 hover:underline"
+                      >
+                        ...more
+                      </button>
+                    )}
+                  </div>
+
+                  <a
+                    href={
+                      offer.ctaPhone
+                        ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+                        : offer.ctaLink || "#"
+                    }
+                    class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 rounded-full transition-colors text-center text-sm shadow-lg uppercase tracking-wide"
+                  >
+                    {offer.ctaText} {offer.ctaPhone}
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+
+    <!-- Mobile Dots -->
+    {
+      offers.length > 1 && (
+        <div class="flex justify-center gap-2 mt-6">
+          {offers.map((_, index) => (
+            <button
+              type="button"
+              class={`offers-mobile-dot w-2.5 h-2.5 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+              data-index={index}
+              aria-label={`Go to offer ${index + 1}`}
+            />
+          ))}
+        </div>
+      )
+    }
+  </div>
+
+  <!-- Disclaimer -->
+  {
+    disclaimer && (
+      <div class="container mx-auto px-6 lg:px-16 mt-8">
+        <p class="text-neutral-400 text-xs lg:text-sm text-center leading-relaxed  max-w-4xl mx-auto">
+          {disclaimer}
+        </p>
+      </div>
+    )
+  }
+
+  {/* Modals */}
+  {
+    offers.map((offer, index) => (
+      <div
+        id={`modal-${index}`}
+        class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
+        data-modal
+      >
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
+          {/* Close button */}
+          <button
+            data-modal-close
+            class="absolute top-4 right-4 z-10 bg-black text-white rounded-full w-10 h-10 flex items-center justify-center hover:bg-neutral-800 transition-colors"
+          >
+            <Icon name="close" size={15} />
+          </button>
+
+          {/* Modal Content */}
+          <div class="overflow-y-auto max-h-[90vh]">
+            {/* Image */}
+            <div class="relative h-48 lg:h-72">
+              <img
+                src={getImageUrl(offer.image)}
+                alt={offer.imageAlt || offer.title}
+                class="w-full h-full object-cover"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+
+              {/* Price badge */}
+              <div class="absolute top-4 left-4 lg:top-6 lg:left-6 bg-neutral-900 rounded-full px-4 py-2 lg:px-5 lg:py-3 flex justify-center items-center gap-2">
+                {offer.originalPrice && (
+                  <span class="text-xs lg:text-sm text-neutral-400 line-through">
+                    ${offer.originalPrice}
+                  </span>
+                )}
+                <span class="text-[#44EE5B] text-2xl lg:text-4xl font-bold">
+                  ${offer.price}
+                </span>
+              </div>
+
+              {/* Category label */}
+              <div class="absolute bottom-4 left-4 lg:bottom-6 lg:left-6">
+                <span class="text-white text-xl lg:text-3xl font-bold drop-shadow-lg">
+                  {offer.category}
+                </span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div class="p-6 lg:p-10">
+              <h3 class="text-black text-xl lg:text-3xl font-bold mb-2 lg:mb-3 leading-tight">
+                {offer.title}
+              </h3>
+              {offer.subtitle && (
+                <p class="text-black text-base lg:text-lg font-light mb-3 lg:mb-4">
+                  {offer.subtitle}
+                </p>
+              )}
+              {offer.disclaimer && (
+                <p class="text-neutral-700 text-xs lg:text-sm inline-block bg-[#D9D9D9] rounded-full px-3 lg:px-4 py-1.5 lg:py-2 mb-5 lg:mb-6 uppercase tracking-wide font-bold">
+                  {offer.disclaimer}
+                </p>
+              )}
+
+              <div class="mb-6 lg:mb-8">
+                <h4 class="text-evergreen-primary text-sm lg:text-base font-bold uppercase mb-1 lg:mb-2">
+                  {offer.featuresTitle}
+                </h4>
+                <p class="text-neutral-600 text-xs lg:text-sm mb-4 lg:mb-6">
+                  {offer.featuresSubtitle}
+                </p>
+
+                {offer.highlightedText && (
+                  <p class="text-[#FF6B35] text-sm font-semibold mb-4">
+                    {offer.highlightedText}
+                  </p>
+                )}
+
+                <ul class="space-y-3 lg:space-y-4">
+                  {offer.features?.map((feature) => (
+                    <li class="flex items-start gap-2 lg:gap-3">
+                      <div class="flex-shrink-0 mt-0.5">
+                        <Icon
+                          name="check-circle"
+                          size={18}
+                          class="text-evergreen-primary"
+                        />
+                      </div>
+                      <span class="text-neutral-700 text-sm lg:text-base leading-relaxed font-bold">
+                        {feature.title}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <a
+                href={
+                  offer.ctaPhone
+                    ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+                    : offer.ctaLink || "#"
+                }
+                class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 lg:py-4 rounded-full transition-colors text-center text-base lg:text-lg shadow-lg"
+              >
+                {offer.ctaText} {offer.ctaPhone}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))
+  }
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Desktop Carousel (2 cards at a time)
+    const desktopTrack = document.querySelector(
+      ".offers-desktop-track",
+    ) as HTMLElement | null;
+    const desktopSlides = document.querySelectorAll(".offers-desktop-slide");
+    const desktopDots = document.querySelectorAll(".offers-desktop-dot");
+    const desktopPrev = document.querySelector(".offers-desktop-prev");
+    const desktopNext = document.querySelector(".offers-desktop-next");
+
+    if (desktopTrack && desktopSlides.length > 2) {
+      let currentPage = 0;
+      const totalPages = Math.ceil(desktopSlides.length / 2);
+
+      function updateDesktopCarousel() {
+        if (!desktopTrack) return;
+        desktopTrack.style.transform = `translateX(-${currentPage * 100}%)`;
+
+        desktopDots.forEach((dot, index) => {
+          if (index === currentPage) {
+            dot.classList.remove("bg-neutral-600");
+            dot.classList.add("bg-evergreen-primary");
+          } else {
+            dot.classList.remove("bg-evergreen-primary");
+            dot.classList.add("bg-neutral-600");
+          }
+        });
+      }
+
+      desktopPrev?.addEventListener("click", () => {
+        if (currentPage > 0) {
+          currentPage--;
+          updateDesktopCarousel();
+        }
+      });
+
+      desktopNext?.addEventListener("click", () => {
+        if (currentPage < totalPages - 1) {
+          currentPage++;
+          updateDesktopCarousel();
+        }
+      });
+
+      desktopDots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const index = parseInt(dot.getAttribute("data-index") || "0", 10);
+          currentPage = index;
+          updateDesktopCarousel();
+        });
+      });
+    }
+
+    // Mobile Carousel (1 card at a time, swipe + dots)
+    const mobileTrack = document.querySelector(
+      ".offers-mobile-track",
+    ) as HTMLElement | null;
+    const mobileSlides = document.querySelectorAll(".offers-mobile-slide");
+    const mobileDots = document.querySelectorAll(".offers-mobile-dot");
+
+    if (mobileTrack && mobileSlides.length > 1) {
+      let currentIndex = 0;
+      const totalSlides = mobileSlides.length;
+
+      function updateMobileCarousel() {
+        if (!mobileTrack) return;
+        mobileTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+        mobileDots.forEach((dot, index) => {
+          if (index === currentIndex) {
+            dot.classList.remove("bg-neutral-600");
+            dot.classList.add("bg-evergreen-primary");
+          } else {
+            dot.classList.remove("bg-evergreen-primary");
+            dot.classList.add("bg-neutral-600");
+          }
+        });
+      }
+
+      mobileDots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const index = parseInt(dot.getAttribute("data-index") || "0", 10);
+          currentIndex = index;
+          updateMobileCarousel();
+        });
+      });
+
+      // Touch/Swipe support
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      mobileTrack.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      mobileTrack.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (diff > swipeThreshold && currentIndex < totalSlides - 1) {
+          currentIndex++;
+          updateMobileCarousel();
+        } else if (diff < -swipeThreshold && currentIndex > 0) {
+          currentIndex--;
+          updateMobileCarousel();
+        }
+      });
+    }
+
+    // Modal functionality
+    const modalTriggers = document.querySelectorAll("[data-modal-trigger]");
+    const modals = document.querySelectorAll("[data-modal]");
+    const modalCloses = document.querySelectorAll("[data-modal-close]");
+
+    modalTriggers.forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const modalId = trigger.getAttribute("data-modal-trigger");
+        const modal = document.getElementById(modalId || "");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+          document.body.style.overflow = "hidden";
+        }
+      });
+    });
+
+    modalCloses.forEach((close) => {
+      close.addEventListener("click", () => {
+        const modal = close.closest("[data-modal]");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          document.body.style.overflow = "";
+        }
+      });
+    });
+
+    modals.forEach((modal) => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          document.body.style.overflow = "";
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        modals.forEach((modal) => {
+          if (!modal.classList.contains("hidden")) {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            document.body.style.overflow = "";
+          }
+        });
+      }
+    });
+  });
+</script>

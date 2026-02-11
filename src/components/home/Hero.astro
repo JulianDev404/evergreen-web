@@ -1,0 +1,146 @@
+---
+import { Icon } from "astro-icon/components";
+import { processMarkdown } from "@/utils/payload";
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+const getSiteSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
+  const data = await res.json();
+  return data;
+};
+
+const siteSettings = await getSiteSettings();
+
+const { contact } = siteSettings;
+
+interface Props {
+  data: {
+    title?: string;
+    subtitle?: string;
+    buttons: {
+      primaryButton: {
+        enabled: boolean;
+        text: string;
+        link: string;
+        showIcon: boolean;
+      };
+      secondaryButton: {
+        enabled: boolean;
+        text: string;
+        showPhoneIcon: boolean;
+        // phoneNumber: string;
+      };
+    };
+    backgroundVideo: {
+      url: string;
+      alt: string;
+    };
+  };
+}
+
+const {
+  title,
+  subtitle,
+  buttons: { primaryButton, secondaryButton },
+  backgroundVideo,
+} = Astro.props.data;
+---
+
+<section class="relative bg-black text-white">
+  <!-- Background Video with Overlay -->
+  <div class="absolute inset-0 z-0">
+    <video muted autoplay loop playsinline class="w-full h-full object-cover">
+      <source src={API_URL + backgroundVideo.url} type="video/mp4" />
+    </video>
+    <div class="absolute inset-0 bg-gradient-to-r from-black/80 to-black/40">
+    </div>
+  </div>
+
+  <div
+    class="container mx-auto px-10 py-24 pt-32 md:py-32 lg:py-40 relative z-10"
+  >
+    <div class="max-w-2xl mx-auto md:mx-0 text-center md:text-left">
+      <!-- Main Title -->
+      <h1
+        class="text-xl sm:text-4xl md:text-5xl lg:text-5xl font-bold md:mb-6 leading-tight font-gramatika-bold"
+        set:html={processMarkdown(title)}
+      />
+
+      <!-- Subtitle -->
+      <p set:html={processMarkdown(subtitle)} />
+
+      <!-- CTA Buttons -->
+      <div
+        class="flex sm:flex-row gap-2 justify-center md:justify-start items-center md:items-start mt-12"
+      >
+        <!-- Email Us Button -->
+        {
+          primaryButton.enabled && (
+            <a
+              href={`${primaryButton.link}${contact.email}`}
+              class="inline-flex items-center justify-center gap-2 bg-black text-white md:px-8 md:py-4 p-1 rounded-full font-bold transition-colors text-base border-2 border-evergreen-primary w-full sm:w-auto"
+            >
+              {primaryButton.showIcon && <Icon name="email" size={20} />}
+              {primaryButton.text}
+            </a>
+          )
+        }
+
+        <!-- Call Now Button -->
+        {
+          secondaryButton.enabled && (
+            <a
+              href={`tel:${contact.phone.replace(/\D/g, "")}`}
+              class="inline-flex items-center justify-center gap-2 bg-evergreen-primary  text-white text-sm md:text-base md:px-8 md:py-4 p-2 rounded-full font-bold transition-colors shadow-lg w-full sm:w-auto"
+            >
+              {secondaryButton.showPhoneIcon && (
+                <Icon name="phone-add" size={20} />
+              )}
+              <span>{contact.phone}</span>
+            </a>
+          )
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Degradado hacia abajo - de transparente a negro -->
+  <div
+    class="absolute -bottom-px left-0 right-0 h-32 bg-gradient-to-b from-transparent to-black z-20 pointer-events-none"
+  >
+  </div>
+</section>
+
+<style>
+  /* Ensure proper section height */
+  section {
+    min-height: 200px;
+    position: relative;
+  }
+
+  @media (min-width: 640px) {
+    section {
+      min-height: 400px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    section {
+      min-height: 600px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    section {
+      min-height: 700px;
+    }
+  }
+
+  /* Asegurar que el video cubra toda el área */
+  video {
+    min-width: 100%;
+    min-height: 100%;
+    object-fit: cover;
+  }
+</style>

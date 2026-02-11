@@ -1,0 +1,138 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface Props {
+  faqSection?: {
+    enabled?: boolean;
+    badge?: string;
+    heading?: string;
+    description?: string;
+    items?: FAQItem[];
+  };
+}
+
+const { faqSection } = Astro.props;
+
+// Valores por defecto
+const defaultItems: FAQItem[] = [
+  {
+    question: "What types of plumbing repair services do you provide?",
+    answer:
+      "We offer a wide range of plumbing repair services including drain cleaning, faucet repair, leak detection and repair, burst pipe repair, toilet installation and bathroom remodeling, water heater repair and replacement, sewer line inspection, gas line installation and more. Our licensed plumbers are equipped to handle both residential and commercial plumbing needs.",
+  },
+  {
+    question: "How long will my plumbing repairs take to complete?",
+    answer:
+      "Repair times vary depending on the complexity of the issue. Simple repairs like faucet replacements may take 1-2 hours, while more extensive work like re-piping or sewer line repair may require additional time. We'll provide you with an estimated timeline before starting any work.",
+  },
+  {
+    question: "How do I know if I have a plumbing emergency?",
+    answer:
+      "Signs of a plumbing emergency include burst pipes, sewage backup, no water supply, gas leaks, or major leaks causing water damage. If you experience any of these, call us immediately at (401) 293-2048. We offer emergency plumbing services to minimize damage to your home.",
+  },
+];
+
+const showSection = !faqSection || faqSection.enabled !== false;
+const badge = faqSection?.badge || "FAQ Section";
+const heading =
+  faqSection?.heading || "Frequently Asked Questions About Plumber Repair";
+const description =
+  faqSection?.description ||
+  "Take answers to common plumbing repair questions. It's common to come across a lot of knowledge partially or fully incorrect, so here are trusted and verified answers to the most commonly asked questions.";
+const items =
+  faqSection?.items && faqSection.items.length > 0
+    ? faqSection.items
+    : defaultItems;
+
+if (!showSection || items.length === 0) {
+  return null;
+}
+---
+
+<section class="bg-white py-12 lg:py-16">
+  <div class="container mx-auto px-6 lg:px-16">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="lg:text-center mb-6">
+        <div
+          class="hidden lg:inline-block bg-neutral-100 border border-neutral-200 text-black text-xl font-bold px-6 py-2 rounded-full mb-4"
+        >
+          {badge}
+        </div>
+        <h2 class="text-black text-4xl lg:text-4xl font-bold mb-3">
+          {heading}
+        </h2>
+        {
+          description && (
+            <p class="text-neutral-900 lg:text-md text-sm max-w-3xl mx-auto">
+              {description}
+            </p>
+          )
+        }
+      </div>
+
+      <!-- FAQ Items -->
+      <div class="space-y-2">
+        {
+          items.map((item, index) => (
+            <details class="group bg-neutral-900 rounded-xl border border-neutral-800">
+              <summary class="flex items-center justify-between p-5 cursor-pointer list-none">
+                <h4 class="text-[#44EE5B] text-md lg:text-xl font-semibold w-3/4 lg:w-full">
+                  {item.question}
+                </h4>
+                <Icon
+                  name="arrow-down"
+                  size={20}
+                  class="text-neutral-200 transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <div class="px-5 pb-5 w-3/4 lg:w-full">
+                <p class=" text-sm lg:text-base leading-relaxed text-neutral-100">
+                  {item.answer}
+                </p>
+              </div>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq-icon.open {
+    transform: rotate(90deg);
+  }
+</style>
+
+<script>
+  const faqTriggers = document.querySelectorAll(".faq-trigger");
+
+  faqTriggers.forEach((trigger) => {
+    trigger.addEventListener("click", () => {
+      const content = trigger.nextElementSibling as HTMLElement;
+      const icon = trigger.querySelector(".faq-icon");
+
+      if (content.classList.contains("hidden")) {
+        // Close all other FAQs
+        document
+          .querySelectorAll(".faq-content")
+          .forEach((c) => c.classList.add("hidden"));
+        document
+          .querySelectorAll(".faq-icon")
+          .forEach((i) => i.classList.remove("open"));
+
+        content.classList.remove("hidden");
+        icon?.classList.add("open");
+      } else {
+        content.classList.add("hidden");
+        icon?.classList.remove("open");
+      }
+    });
+  });
+</script>

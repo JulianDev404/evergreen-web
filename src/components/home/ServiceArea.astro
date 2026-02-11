@@ -1,0 +1,192 @@
+---
+// apps/web/src/components/home/ServiceArea.astro
+import { Icon } from "astro-icon/components";
+import { getImageUrl } from '../../utils/payload';
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  customCities?: Array<{ name: string; featured?: boolean }>;
+  customSettings?: {
+    mobileColumns?: number;
+    desktopColumns?: number;
+    iconSize?: 'small' | 'medium' | 'large';
+    showCitiesList?: boolean;
+  };
+}
+
+const { 
+  title, 
+  subtitle, 
+  customCities,
+  customSettings 
+} = Astro.props;
+
+const API_URL = import.meta.env.PUBLIC_API_URL;
+
+// Fetch service area settings from Payload
+const getServiceAreaSettings = async () => {
+  const res = await fetch(`${API_URL}/api/globals/service-area-settings?depth=3`);
+  const data = await res.json();
+  return data;
+};
+
+const serviceAreaData = await getServiceAreaSettings();
+
+if (!serviceAreaData?.enabled) {
+  return null;
+}
+
+// Use custom values if provided, otherwise use Payload data
+const { images, cities: payloadCities = [], displaySettings: payloadDisplaySettings = {} } = serviceAreaData;
+
+const cities = customCities || payloadCities;
+const displaySettings = customSettings ? { ...payloadDisplaySettings, ...customSettings } : payloadDisplaySettings;
+
+// Configuración de columnas
+const mobileColumns = parseInt(displaySettings.mobileColumns) || 2;
+const desktopColumns = parseInt(displaySettings.desktopColumns) || 3;
+const showCitiesList = displaySettings.showCitiesList ?? true;
+
+// Tamaños de iconos
+const iconSizes = {
+  small: { mobile: 14, desktop: 18 },
+  medium: { mobile: 16, desktop: 20 },
+  large: { mobile: 18, desktop: 24 },
+};
+
+const iconSize = iconSizes[displaySettings.iconSize as keyof typeof iconSizes] || iconSizes.medium;
+
+// Dividir ciudades para mobile
+function divideCitiesForMobile(citiesList: any[], columns: number) {
+  const itemsPerColumn = Math.ceil(citiesList.length / columns);
+  const result = [];
+  
+  for (let i = 0; i < columns; i++) {
+    result.push(citiesList.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn));
+  }
+  
+  return result;
+}
+
+// Dividir ciudades para desktop
+function divideCitiesForDesktop(citiesList: any[], columns: number) {
+  const itemsPerColumn = Math.ceil(citiesList.length / columns);
+  const result = [];
+  
+  for (let i = 0; i < columns; i++) {
+    result.push(citiesList.slice(i * itemsPerColumn, (i + 1) * itemsPerColumn));
+  }
+  
+  return result;
+}
+
+const mobileColumnsData = divideCitiesForMobile(cities, mobileColumns);
+const desktopColumnsData = divideCitiesForDesktop(cities, desktopColumns);
+---
+
+<section class="relative text-white overflow-hidden bg-black py-8 lg:py-12 lg:px-12 w-full">
+  <!-- Service Area Header -->
+  {(title || subtitle) && (
+    <div class="mb-8 lg:mb-12 text-center lg:text-left">
+      {title && (
+        <h2 class="text-3xl lg:text-5xl font-bold mb-2 lg:mb-0 text-[#0FA623]"  set:html={title} />
+      )}
+      {subtitle && (
+        <p class="text-white text-sm lg:text-lg">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  )}
+
+  <!-- Mobile Layout -->
+  <div class="lg:hidden px-10">
+    <!-- Cities List -->
+    {showCitiesList && cities.length > 0 && (
+      <div class={`grid gap-x-4 gap-y-3 mb-8`} style={`grid-template-columns: repeat(${mobileColumns}, 1fr)`}>
+        {mobileColumnsData.map((column: any[]) => (
+          <div class="space-y-3">
+            {column.map((city: any) => (
+              <div class="flex items-center gap-2">
+                <div class="text-evergreen-primary flex-shrink-0">
+                  <Icon name="map-marker" size={iconSize.mobile} />
+                </div>
+                <span class={`text-white text-sm ${city.featured ? 'font-bold' : ''}`}>
+                  {city.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    )}
+
+    <!-- Map -->
+    {images?.mapImage && (
+      <div class="relative flex items-center justify-center">
+        <!-- Rhode Island Map Image -->
+        <img
+          src={getImageUrl(images.mapImage)}
+          alt="Service Area Map"
+          class="w-full max-w-sm"
+        />
+
+        <!-- Location Pin -->
+        {images.locationPin && (
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+            <img
+              src={getImageUrl(images.locationPin)}
+              alt="Our Location"
+              class="w-16"
+            />
+          </div>
+        )}
+      </div>
+    )}
+  </div>
+
+  <!-- Desktop Layout -->
+  <div class="hidden lg:grid lg:grid-cols-2 gap-12 items-start w-full">
+    <!-- Cities List -->
+    {showCitiesList && cities.length > 0 && (
+      <div class={`grid gap-x-8 gap-y-4`} style={`grid-template-columns: repeat(${desktopColumns}, 1fr)`}>
+        {desktopColumnsData.map((column: any[]) => (
+          <div class="space-y-4">
+            {column.map((city: any) => (
+              <div class="flex items-center gap-3">
+                <div class="text-evergreen-primary flex-shrink-0">
+                  <Icon name="map-marker" size={iconSize.desktop} />
+                </div>
+                <span class={`text-white text-lg ${city.featured ? 'font-bold' : ''}`}>
+                  {city.name}
+                </span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    )}
+
+    <!-- Map -->
+    {images?.mapImage && (
+      <div class="relative flex items-center justify-center">
+        <!-- Map Image -->
+        <img
+          src={getImageUrl(images.mapImage)}
+          alt="Service Area Map"
+          class="w-full max-w-md"
+        />
+
+        <!-- Location Pin -->
+        {images.locationPin && (
+          <img
+            src={getImageUrl(images.locationPin)}
+            alt="Our Location"
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-18"
+          />
+        )}
+      </div>
+    )}
+  </div>
+</section>

@@ -1,0 +1,43 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+  heading?: string;
+  subheading?: string;
+  cities: string[];
+}
+
+const {
+  heading = "Service Area",
+  subheading = "Serving Communities in Providence for Over 17 Years",
+  cities,
+} = Astro.props;
+---
+
+<section class="bg-black py-12 lg:py-16">
+  <div class="container mx-auto px-6 lg:px-16">
+    <h2 class="text-white text-3xl lg:text-4xl font-bold mb-1 italic">
+      <span class="text-evergreen-primary">{heading}</span>
+    </h2>
+    <p class="text-neutral-400 text-sm mb-8">
+      {subheading}
+    </p>
+
+    <div
+      class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-x-6 gap-y-2.5"
+    >
+      {
+        cities.map((city) => (
+          <div class="flex items-center gap-2">
+            <Icon
+              name="map-marker"
+              size={14}
+              class="text-evergreen-primary flex-shrink-0"
+            />
+            <span class="text-white text-xs">{city}</span>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>

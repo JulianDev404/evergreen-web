@@ -1,0 +1,619 @@
+---
+import { Icon } from "astro-icon/components";
+import { getImageUrl } from "../utils/payload";
+
+interface OfferCard {
+  image: {
+    url: string;
+  };
+  imageAlt?: string;
+  category: string;
+  originalPrice?: string;
+  price: string;
+  monthlyPayment?: boolean;
+  title: string;
+  subtitle: string;
+  disclaimer: string;
+  featuresTitle: string;
+  featuresSubtitle: string;
+  features: {
+    text: string;
+  }[];
+  ctaText: string;
+  ctaLink?: string;
+  ctaPhone?: string;
+}
+
+interface Props {
+  heading?: string;
+  offers: OfferCard[];
+  disclaimer?: string;
+}
+
+const {
+  heading = "All Plumbing Coupons & Special Offers from Evergreen Services",
+  offers = [],
+  disclaimer = "* Call for Conditions & Restrictions / Present Coupon at Time of Service / Not Available to Combine with Other Offers Offer must be presented to Techs before any work begins. *",
+} = Astro.props;
+
+// No mostrar la sección si no hay ofertas
+if (!offers || offers.length === 0) {
+  return null;
+}
+
+// Helper to get feature text (handles both string and object)
+const getFeatureText = (feature: any): string => {
+  if (typeof feature === "string") return feature;
+  if (feature?.title) return feature.title;
+  if (feature?.feature?.text) return feature.feature.title;
+  return "";
+};
+---
+
+<section id="offers" class="bg-black py-12 lg:py-20">
+  <div class="container mx-auto px-4">
+    <!-- Header -->
+    <h2
+      class="text-white text-2xl lg:text-4xl font-bold text-center mb-10 lg:mb-14"
+    >
+      {heading}
+    </h2>
+
+    <!-- Desktop Layout -->
+    <div class="hidden lg:block">
+      <div class="relative max-w-6xl mx-auto">
+        <!-- Navigation Arrow - Left -->
+        <button
+          type="button"
+          class="financing-desktop-prev absolute -left-16 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center text-white hover:text-evergreen-primary transition-colors"
+          aria-label="Previous offers"
+        >
+          <Icon name="chevron-left" class="w-8 h-8" />
+        </button>
+
+        <!-- Cards Container -->
+        <div class="financing-desktop-container overflow-hidden">
+          <div
+            class="financing-desktop-track flex transition-transform duration-300 ease-in-out"
+          >
+            {
+              Array.from({ length: Math.ceil(offers.length / 2) }).map(
+                (_, pageIndex) => (
+                  <div class="financing-desktop-page w-full flex-shrink-0 flex gap-6 justify-center px-4">
+                    {offers
+                      .slice(pageIndex * 2, pageIndex * 2 + 2)
+                      .map((offer, index) => (
+                        <div class="bg-white rounded-2xl overflow-hidden shadow-xl w-[500px] flex-shrink-0">
+                          {/* Image Header */}
+                          <div class="relative h-[280px]">
+                            <img
+                              src={getImageUrl(offer.image)}
+                              alt={offer.imageAlt || offer.title}
+                              class="w-full h-full object-cover"
+                            />
+
+                            {/* Price badge - top right */}
+                            <div class="absolute top-4 right-4 bg-black rounded-xl px-4 py-2">
+                              <div class="flex items-baseline">
+                                <span class="text-evergreen-primary text-3xl font-bold">
+                                  ${offer.price}
+                                </span>
+                                {offer.monthlyPayment && (
+                                  <span class="text-neutral-400 text-base ml-0.5">
+                                    /mo
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Category label - bottom left */}
+                            <div class="absolute bottom-4 left-5">
+                              <span class="text-white text-2xl font-bold drop-shadow-lg">
+                                {offer.category}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Content */}
+                          <div class="p-6 lg:p-8">
+                            <h3 class="text-black text-xl lg:text-2xl font-bold mb-2 leading-tight">
+                              {offer.title}
+                            </h3>
+                            <p class="text-neutral-600 text-base mb-4">
+                              {offer.subtitle}
+                            </p>
+
+                            {/* Disclaimer badge */}
+                            <p class="text-neutral-600 text-xs inline-block bg-[#E5E5E5] rounded-full px-4 py-1.5 mb-6 uppercase tracking-wide font-semibold">
+                              {offer.disclaimer}
+                            </p>
+
+                            {/* Features section */}
+                            <div class="mb-6">
+                              <h4 class="text-evergreen-primary text-sm font-bold uppercase mb-1">
+                                {offer.featuresTitle}
+                              </h4>
+                              <p class="text-neutral-500 text-sm mb-4">
+                                {offer.featuresSubtitle}
+                              </p>
+
+                              <ul class="space-y-3">
+                                {offer.features?.slice(0, 3).map((feature) => (
+                                  <li class="flex items-start gap-3">
+                                    <div class="flex-shrink-0 mt-0.5">
+                                      <Icon
+                                        name="check-circle"
+                                        size={18}
+                                        class="text-evergreen-primary"
+                                      />
+                                    </div>
+                                    <span class="text-neutral-700 text-sm leading-relaxed font-medium">
+                                      {getFeatureText(feature)}
+                                    </span>
+                                  </li>
+                                ))}
+                              </ul>
+
+                              {offer.features && offer.features.length > 3 && (
+                                <button
+                                  data-modal-trigger={`financing-modal-${pageIndex * 2 + index}`}
+                                  class="text-evergreen-primary text-sm font-semibold mt-2 hover:underline ml-7"
+                                >
+                                  ...more
+                                </button>
+                              )}
+                            </div>
+
+                            {/* CTA Button */}
+                            <a
+                              href={
+                                offer.ctaPhone
+                                  ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+                                  : offer.ctaLink || "#"
+                              }
+                              class="inline-block bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 px-8 rounded-full transition-colors text-center text-base shadow-lg uppercase tracking-wide"
+                            >
+                              {offer.ctaPhone
+                                ? `CALL NOW ${offer.ctaPhone}`
+                                : offer.ctaText}
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ),
+              )
+            }
+          </div>
+        </div>
+
+        <!-- Navigation Arrow - Right -->
+        <button
+          type="button"
+          class="financing-desktop-next absolute -right-16 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center text-white hover:text-evergreen-primary transition-colors"
+          aria-label="Next offers"
+        >
+          <Icon name="chevron-right" class="w-8 h-8" />
+        </button>
+      </div>
+
+      <!-- Desktop Dots -->
+      {
+        offers.length > 2 && (
+          <div class="flex justify-center gap-2 mt-10">
+            {Array.from({ length: Math.ceil(offers.length / 2) }).map(
+              (_, index) => (
+                <button
+                  type="button"
+                  class={`financing-desktop-dot w-3 h-3 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+                  data-index={index}
+                  aria-label={`Go to page ${index + 1}`}
+                />
+              ),
+            )}
+          </div>
+        )
+      }
+    </div>
+
+    <!-- Mobile: Carousel layout -->
+    <div class="lg:hidden">
+      <div class="financing-carousel-container overflow-hidden">
+        <div
+          class="financing-carousel-track flex transition-transform duration-300 ease-in-out"
+        >
+          {
+            offers.map((offer, index) => (
+              <div class="financing-carousel-slide w-full flex-shrink-0 px-4">
+                <div class="bg-white rounded-2xl overflow-hidden shadow-xl max-w-[400px] mx-auto">
+                  {/* Image Header */}
+                  <div class="relative h-[220px]">
+                    <img
+                      src={getImageUrl(offer.image)}
+                      alt={offer.imageAlt || offer.title}
+                      class="w-full h-full object-cover"
+                    />
+
+                    {/* Price badge */}
+                    <div class="absolute top-3 right-3 bg-black rounded-xl px-3 py-1.5">
+                      <div class="flex items-baseline">
+                        <span class="text-evergreen-primary text-2xl font-bold">
+                          ${offer.price}
+                        </span>
+                        {offer.monthlyPayment && (
+                          <span class="text-neutral-400 text-sm ml-0.5">
+                            /mo
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Category label */}
+                    <div class="absolute bottom-3 left-4">
+                      <span class="text-white text-xl font-bold drop-shadow-lg">
+                        {offer.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div class="p-5">
+                    <h3 class="text-black text-lg font-bold mb-1 leading-tight">
+                      {offer.title}
+                    </h3>
+                    <p class="text-neutral-600 text-sm mb-3">
+                      {offer.subtitle}
+                    </p>
+
+                    {/* Disclaimer badge */}
+                    <p class="text-neutral-600 text-[10px] inline-block bg-[#E5E5E5] rounded-full px-3 py-1 mb-4 uppercase tracking-wide font-semibold">
+                      {offer.disclaimer}
+                    </p>
+
+                    {/* Features section */}
+                    <div class="mb-5">
+                      <h4 class="text-evergreen-primary text-xs font-bold uppercase mb-0.5">
+                        {offer.featuresTitle}
+                      </h4>
+                      <p class="text-neutral-500 text-xs mb-3">
+                        {offer.featuresSubtitle}
+                      </p>
+
+                      <ul class="space-y-2">
+                        {offer.features?.slice(0, 3).map((feature) => (
+                          <li class="flex items-start gap-2">
+                            <div class="flex-shrink-0 mt-0.5">
+                              <Icon
+                                name="check-circle"
+                                size={16}
+                                class="text-evergreen-primary"
+                              />
+                            </div>
+                            <span class="text-neutral-700 text-sm leading-relaxed font-medium">
+                              {getFeatureText(feature)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+
+                      {offer.features && offer.features.length > 3 && (
+                        <button
+                          data-modal-trigger={`financing-modal-${index}`}
+                          class="text-evergreen-primary text-sm font-semibold mt-2 hover:underline ml-6"
+                        >
+                          ...more
+                        </button>
+                      )}
+                    </div>
+
+                    {/* CTA Button */}
+                    <a
+                      href={
+                        offer.ctaPhone
+                          ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+                          : offer.ctaLink || "#"
+                      }
+                      class="inline-block bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 px-6 rounded-full transition-colors text-center text-sm shadow-lg uppercase tracking-wide"
+                    >
+                      {offer.ctaPhone
+                        ? `CALL NOW ${offer.ctaPhone}`
+                        : offer.ctaText}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+
+      <!-- Mobile Carousel Dots -->
+      {
+        offers.length > 1 && (
+          <div class="flex justify-center gap-2 mt-6">
+            {offers.map((_, index) => (
+              <button
+                type="button"
+                class={`financing-carousel-dot w-2.5 h-2.5 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
+                data-index={index}
+                aria-label={`Go to offer ${index + 1}`}
+              />
+            ))}
+          </div>
+        )
+      }
+    </div>
+
+    {/* Disclaimer */}
+    {
+      disclaimer && (
+        <p class="text-neutral-400 text-sm text-center max-w-4xl mx-auto mt-10 leading-relaxed">
+          {disclaimer}
+        </p>
+      )
+    }
+  </div>
+
+  {/* Modals */}
+  {
+    offers.map((offer, index) => (
+      <div
+        id={`financing-modal-${index}`}
+        class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
+        data-modal
+      >
+        <div class="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden relative">
+          {/* Close button */}
+          <button
+            data-modal-close
+            class="absolute top-3 right-3 z-10 bg-black text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-neutral-800 transition-colors"
+          >
+            <Icon name="close" size={12} />
+          </button>
+
+          {/* Modal Content */}
+          <div class="overflow-y-auto max-h-[90vh]">
+            {/* Image */}
+            <div class="relative h-48">
+              <img
+                src={getImageUrl(offer.image)}
+                alt={offer.imageAlt || offer.title}
+                class="w-full h-full object-cover"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+              {/* Price badge */}
+              <div class="absolute top-4 right-4 bg-black rounded-xl px-4 py-2">
+                <span class="text-evergreen-primary text-2xl font-bold">
+                  ${offer.price}
+                </span>
+              </div>
+
+              {/* Category label */}
+              <div class="absolute bottom-4 left-4">
+                <span class="text-white text-xl font-bold drop-shadow-lg">
+                  {offer.category}
+                </span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div class="p-6">
+              <h3 class="text-black text-xl font-bold mb-2 leading-tight">
+                {offer.title}
+              </h3>
+              <p class="text-neutral-600 text-base mb-3">{offer.subtitle}</p>
+              <p class="text-neutral-700 text-xs inline-block bg-[#E5E5E5] rounded-full px-3 py-1.5 mb-5 uppercase tracking-wide font-semibold">
+                {offer.disclaimer}
+              </p>
+
+              <div class="mb-6">
+                <h4 class="text-evergreen-primary text-sm font-bold uppercase mb-1">
+                  {offer.featuresTitle}
+                </h4>
+                <p class="text-neutral-600 text-xs mb-4">
+                  {offer.featuresSubtitle}
+                </p>
+
+                <ul class="space-y-3">
+                  {offer.features?.map((feature) => (
+                    <li class="flex items-start gap-2">
+                      <div class="flex-shrink-0 mt-0.5">
+                        <Icon
+                          name="check-circle"
+                          size={16}
+                          class="text-evergreen-primary"
+                        />
+                      </div>
+                      <span class="text-neutral-700 text-sm leading-relaxed">
+                        {getFeatureText(feature)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <a
+                href={
+                  offer.ctaPhone
+                    ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+                    : offer.ctaLink || "#"
+                }
+                class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 rounded-full transition-colors text-center text-base shadow-lg uppercase"
+              >
+                {offer.ctaPhone ? `CALL NOW ${offer.ctaPhone}` : offer.ctaText}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    ))
+  }
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Desktop Carousel functionality (2 cards per page)
+    const desktopTrack = document.querySelector(
+      ".financing-desktop-track",
+    ) as HTMLElement | null;
+    const desktopPages = document.querySelectorAll(".financing-desktop-page");
+    const desktopDots = document.querySelectorAll(".financing-desktop-dot");
+    const desktopPrevBtn = document.querySelector(".financing-desktop-prev");
+    const desktopNextBtn = document.querySelector(".financing-desktop-next");
+
+    if (desktopTrack && desktopPages.length > 1) {
+      let currentDesktopIndex = 0;
+      const totalDesktopPages = desktopPages.length;
+
+      function updateDesktopCarousel() {
+        if (!desktopTrack) return;
+        desktopTrack.style.transform = `translateX(-${currentDesktopIndex * 100}%)`;
+
+        desktopDots.forEach((dot, index) => {
+          if (index === currentDesktopIndex) {
+            dot.classList.remove("bg-neutral-600");
+            dot.classList.add("bg-evergreen-primary");
+          } else {
+            dot.classList.remove("bg-evergreen-primary");
+            dot.classList.add("bg-neutral-600");
+          }
+        });
+      }
+
+      // Dot navigation
+      desktopDots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const index = parseInt(dot.getAttribute("data-index") || "0", 10);
+          currentDesktopIndex = index;
+          updateDesktopCarousel();
+        });
+      });
+
+      // Arrow navigation
+      desktopPrevBtn?.addEventListener("click", () => {
+        currentDesktopIndex =
+          currentDesktopIndex > 0
+            ? currentDesktopIndex - 1
+            : totalDesktopPages - 1;
+        updateDesktopCarousel();
+      });
+
+      desktopNextBtn?.addEventListener("click", () => {
+        currentDesktopIndex =
+          currentDesktopIndex < totalDesktopPages - 1
+            ? currentDesktopIndex + 1
+            : 0;
+        updateDesktopCarousel();
+      });
+    }
+
+    // Mobile Carousel functionality
+    const track = document.querySelector(
+      ".financing-carousel-track",
+    ) as HTMLElement | null;
+    const slides = document.querySelectorAll(".financing-carousel-slide");
+    const dots = document.querySelectorAll(".financing-carousel-dot");
+
+    if (track && slides.length > 1) {
+      let currentIndex = 0;
+      const totalSlides = slides.length;
+
+      function updateCarousel() {
+        if (!track) return;
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+        dots.forEach((dot, index) => {
+          if (index === currentIndex) {
+            dot.classList.remove("bg-neutral-600");
+            dot.classList.add("bg-evergreen-primary");
+          } else {
+            dot.classList.remove("bg-evergreen-primary");
+            dot.classList.add("bg-neutral-600");
+          }
+        });
+      }
+
+      // Dot navigation
+      dots.forEach((dot) => {
+        dot.addEventListener("click", () => {
+          const index = parseInt(dot.getAttribute("data-index") || "0", 10);
+          currentIndex = index;
+          updateCarousel();
+        });
+      });
+
+      // Touch/Swipe support
+      let touchStartX = 0;
+      let touchEndX = 0;
+
+      track.addEventListener("touchstart", (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+
+      track.addEventListener("touchend", (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        const swipeThreshold = 50;
+        const diff = touchStartX - touchEndX;
+
+        if (diff > swipeThreshold && currentIndex < totalSlides - 1) {
+          currentIndex++;
+          updateCarousel();
+        } else if (diff < -swipeThreshold && currentIndex > 0) {
+          currentIndex--;
+          updateCarousel();
+        }
+      });
+    }
+
+    // Modal functionality
+    const modalTriggers = document.querySelectorAll("[data-modal-trigger]");
+    const modals = document.querySelectorAll("[data-modal]");
+    const modalCloses = document.querySelectorAll("[data-modal-close]");
+
+    modalTriggers.forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const modalId = trigger.getAttribute("data-modal-trigger");
+        const modal = document.getElementById(modalId || "");
+        if (modal) {
+          modal.classList.remove("hidden");
+          modal.classList.add("flex");
+          document.body.style.overflow = "hidden";
+        }
+      });
+    });
+
+    modalCloses.forEach((close) => {
+      close.addEventListener("click", () => {
+        const modal = close.closest("[data-modal]");
+        if (modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          document.body.style.overflow = "";
+        }
+      });
+    });
+
+    modals.forEach((modal) => {
+      modal.addEventListener("click", (e) => {
+        if (e.target === modal) {
+          modal.classList.add("hidden");
+          modal.classList.remove("flex");
+          document.body.style.overflow = "";
+        }
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        modals.forEach((modal) => {
+          if (!modal.classList.contains("hidden")) {
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            document.body.style.overflow = "";
+          }
+        });
+      }
+    });
+  });
+</script>

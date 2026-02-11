@@ -1,0 +1,80 @@
+---
+import { processMarkdown, getImageUrl } from "../../utils/payload";
+
+interface Props {
+  financingSection?: {
+    enabled?: boolean;
+    title?: string;
+    description?: string;
+    ctaText?: string;
+    ctaLink?: string;
+    graphicImage?: { url: string; alt?: string } | string;
+  };
+}
+
+const { financingSection } = Astro.props;
+
+// Valores por defecto
+const showSection = !financingSection || financingSection.enabled !== false;
+const title =
+  financingSection?.title ||
+  "Evergreen Services is Proud to Offer Affordable Financing Options.";
+const description =
+  financingSection?.description ||
+  "Upgrade your home hassle-free with our flexible financing options. From repairs to installations, we've got you covered. Contact Evergreen Services today to discover the perfect plan for your dream Warwick, RI home!";
+const ctaText = financingSection?.ctaText || "View Financing Options";
+const ctaLink = financingSection?.ctaLink || "#";
+
+// Procesar imagen
+import arrowsGraphic from "../../assets/arrow-white.png";
+
+let graphicImageUrl = arrowsGraphic.src;
+let graphicAlt = "Growth arrows";
+
+if (financingSection?.graphicImage) {
+  if (typeof financingSection.graphicImage === "object") {
+    graphicImageUrl = getImageUrl(financingSection.graphicImage);
+    graphicAlt = financingSection.graphicImage.alt || "Growth arrows";
+  } else if (typeof financingSection.graphicImage === "string") {
+    graphicImageUrl = financingSection.graphicImage;
+  }
+}
+
+if (!showSection) {
+  return null;
+}
+---
+
+<section class="relative bg-evergreen-primary overflow-hidden">
+  <div class="container mx-auto p-6 lg:px-16">
+    <div class="grid lg:grid-cols-2 gap-12 items-center relative">
+      <!-- Left side - Content -->
+      <div class="text-white lg:py-12 z-10">
+        <h2 class="lg:text-2xl font-bold lg:mb-6 mb-4 leading-tight">
+          {title}
+        </h2>
+        <p
+          class="text-white text-base lg:text-xl lg:mb-8 mb-4 leading-relaxed max-w-2xl"
+        >
+          {description}
+        </p>
+        <a
+          href={ctaLink}
+          class="inline-block bg-evergreen-800 hover:bg-evergreen-950 text-white font-bold
+        lg:py-4 lg:px-12 p-2 rounded-full transition-colors text-base w-fit"
+        >
+          {ctaText}
+        </a>
+      </div>
+
+      <!-- Right side - Graphic Image -->
+      <div class="hidden lg:block absolute right-0 bottom-0 h-full w-1/2">
+        <img
+          src={graphicImageUrl}
+          alt={graphicAlt}
+          class="absolute right-0 bottom-0 w-[900px] h-[300px]"
+        />
+      </div>
+    </div>
+  </div>
+</section>

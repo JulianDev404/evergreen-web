@@ -1,0 +1,24 @@
+---
+import { Icon } from "astro-icon/components";
+---
+
+<div class="fixed bottom-6 right-6 z-50 flex items-center gap-3">
+  <!-- Texto "Chat with us" con SVG de fondo -->
+  <div class="relative">
+    <Icon name="union" width="126" height="38" />
+
+    <span
+      class="absolute inset-0 flex items-center justify-center text-white font-semibold"
+    >
+      Chat with us
+    </span>
+  </div>
+
+  <!-- Botón verde con ícono -->
+  <button
+    class="bg-evergreen-primary text-white w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-colors"
+    aria-label="Chat with us"
+  >
+    <Icon name="chat" />
+  </button>
+</div>
