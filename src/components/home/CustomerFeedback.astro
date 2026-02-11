@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components";
 
 import GoogleLogo from "../../assets/google-logo.png";
-import UserPhoto from "../../assets/user-1.jpg";
+import DefaultUser from "../../assets/default-user.jpg";
 
 import LogoAmanaGoodman from "../../assets/logo-amana-goodman.png";
 import LogoAngiesList from "../../assets/logo-angies-list.png";
@@ -91,11 +91,11 @@ const [reviews, logos] = await await Promise.all([
           class="w-12 h-12 object-contain"
         />
         <div class="flex">
-          <Icon name="star-yellow" size={18} />
-          <Icon name="star-yellow" size={18} />
-          <Icon name="star-yellow" size={18} />
-          <Icon name="star-yellow" size={18} />
-          <Icon name="star-yellow" size={18} />
+          <Icon name="star-yellow" size={18} class="text-[#FFC107]" />
+          <Icon name="star-yellow" size={18} class="text-[#FFC107]" />
+          <Icon name="star-yellow" size={18} class="text-[#FFC107]" />
+          <Icon name="star-yellow" size={18} class="text-[#FFC107]" />
+          <Icon name="star-yellow" size={18} class="text-[#FFC107]" />
         </div>
         <span class="text-neutral-500 text-xs">
           {googleRating} | {totalReviews} reviews
@@ -126,7 +126,7 @@ const [reviews, logos] = await await Promise.all([
             <div class="flex items-center justify-between relative z-10">
               <div class="flex gap-3 items-center">
                 <img
-                  src={getImageUrl(review.photo)}
+                  src={review.photo ? getImageUrl(review.photo) : DefaultUser.src}
                   alt={review.name}
                   class="w-12 h-12 rounded-full object-cover"
                 />
@@ -141,7 +141,7 @@ const [reviews, logos] = await await Promise.all([
             {/* Stars */}
             <div class="flex items-center gap-1 relative z-10">
               {Array.from({ length: 5 }).map(() => (
-                <Icon name="star-yellow" size={18} />
+                <Icon name="star-yellow" size={18} class="text-[#FFC107]" />
               ))}
             </div>
 
@@ -192,7 +192,7 @@ const [reviews, logos] = await await Promise.all([
                 <div class="flex items-center justify-between mb-3 relative z-10">
                   <div class="flex gap-3 items-center">
                     <img
-                      src={getImageUrl(review.photo)}
+                  src={review.photo ? getImageUrl(review.photo) : DefaultUser.src}
                       alt={review.name}
                       class="w-12 h-12 rounded-full object-cover"
                     />
@@ -211,7 +211,7 @@ const [reviews, logos] = await await Promise.all([
                 {/* Stars */}
                 <div class="flex items-center gap-1 mb-1 relative z-10">
                   {Array.from({ length: 5 }).map(() => (
-                    <Icon name="star-yellow" size={20} />
+                    <Icon name="star-yellow" size={20}  class="text-[#FFC107]" />
                   ))}
                 </div>
 
