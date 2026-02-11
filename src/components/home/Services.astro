@@ -3,6 +3,7 @@
 import { Icon } from "astro-icon/components";
 import DynamicIcon from "../DynamicIcon.astro";
 import { processMarkdown, TEXT_STYLES } from "@/utils/payload";
+import { buildServicePath } from "../../utils/navigation";
 
 interface Props {
   data: any;
@@ -45,7 +46,7 @@ const getMainServices = async () => {
 
 const getSubServices = async (parentId: string, limit: number) => {
   const res = await fetch(
-    `${API_URL}/api/services?where[parentService][equals]=${parentId}&where[active][equals]=true&sort=order&limit=${limit}&depth=0`
+    `${API_URL}/api/services?where[parentService][equals]=${parentId}&where[active][equals]=true&sort=order&limit=${limit}&depth=1`
   );
   const data = await res.json();
   return data.docs || [];
@@ -61,8 +62,6 @@ const siteSettings = await getSiteSettings();
 const maxSubServices = mainServicesSettings?.maxSubServicesPerCard ?? 3;
 const showAllServicesLink = mainServicesSettings?.showAllServicesLink ?? true;
 
-
-
 // Obtener servicios principales
 const mainServices = await getMainServices();
 
@@ -72,13 +71,23 @@ if (!mainServices || mainServices.length === 0) {
   return null;
 }
 
-// Obtener sub-servicios para cada servicio principal
+// Obtener sub-servicios para cada servicio principal con URLs correctas
 const servicesWithSubs = await Promise.all(
   mainServices.map(async (service: any) => {
     const subServices = await getSubServices(service.id, maxSubServices);
+    
+    // Construir URLs para cada sub-servicio
+    const subServicesWithUrls = await Promise.all(
+      subServices.map(async (subService: any) => ({
+        ...subService,
+        url: await buildServicePath(subService),
+      }))
+    );
+    
     return {
       ...service,
-      subServices: subServices,
+      url: await buildServicePath(service),
+      subServices: subServicesWithUrls,
     };
   })
 );
@@ -120,7 +129,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
             <div class="space-y-4 flex-1 flex flex-col justify-center">
               {servicesWithSubs[0].subServices?.map((subService: any) => (
                 <a
-                  href={`/services/${subService.slug}`}
+                  href={subService.url}
                   class="text-white flex items-center gap-2 text-sm hover:text-evergreen-primary transition-colors"
                 >
                   {subService.title}
@@ -129,7 +138,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
               ))}
               {showAllServicesLink && (
                 <a
-                  href={`/services/${servicesWithSubs[0].slug}`}
+                  href={servicesWithSubs[0].url}
                   class="text-white hover:text-evergreen-primary transition-colors flex items-center gap-2 text-sm"
                 >
                   All {servicesWithSubs[0].title} Services
@@ -154,7 +163,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
                 />
               )}
 
-              <!-- Feature Badges / Benefits -->
+              {/* <!-- Feature Badges / Benefits --> */}
               {professionalCard.badges && professionalCard.badges.length > 0 && (
                 <div class="flex flex-wrap gap-2 text-white text-sm">
                   {professionalCard.badges.map((badge: any) => (
@@ -166,25 +175,25 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
                 </div>
               )}
 
-              <!-- Description -->
+              {/* <!-- Description --> */}
               {professionalCard.description && (
                 <div class="max-w-lg">                
                   <p set:html={processMarkdown(professionalCard.description, TEXT_STYLES.light)}/>
-</div>
+                </div>
               )}
 
-              <!-- Button -->
+              {/* <!-- Button --> */}
               {professionalCard.ctaButton?.enabled && (
-                <a
-                  href={professionalCard.ctaButton.link || '/request-service'}
+                <button
+              type="button"
+              onclick="openContactModal()"
                   class="inline-block bg-evergreen-primary hover:bg-evergreen-primary/90 text-white px-8 py-3 rounded-full font-bold transition-colors"
                 >
                   {professionalCard.ctaButton.text || 'Request a Service'}
-                </a>
+                </button>
               )}
             </div>
 
-            <!-- Right side: Van image -->
             {professionalCard.vanImage && (
               <div class="flex-shrink-0 ml-8">
                 <img
@@ -199,10 +208,9 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
       )}
     </section>
 
-    <!-- Segunda fila: Resto de servicios -->
     {servicesWithSubs.length > 1 && (
       <section class="flex gap-2">
-        {servicesWithSubs.slice(1).map((service: any) => (
+        {servicesWithSubs.slice(1, 4).map((service: any) => (
           <div class="w-xl relative rounded-2xl overflow-hidden group h-80">
             {service.image && typeof service.image !== "string" && (
               <img
@@ -219,7 +227,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
               <div class="space-y-4 flex-1 flex flex-col justify-center">
                 {service.subServices?.map((subService: any) => (
                   <a
-                    href={`/services/${subService.slug}`}
+                    href={subService.url}
                     class="text-white flex items-center gap-2 text-sm hover:text-evergreen-primary transition-colors"
                   >
                     {subService.title}
@@ -228,7 +236,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
                 ))}
                 {showAllServicesLink && (
                   <a
-                    href={`/services/${service.slug}`}
+                    href={service.url}
                     class="text-white hover:text-evergreen-primary transition-colors flex items-center gap-2 text-sm font-semibold"
                   >
                     All {service.title} Services
@@ -245,14 +253,14 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
 
   <!-- Version Mobile -->
   <div class="lg:hidden pt-2 overflow-x-hidden">
-    <!-- Professional Services Card Mobile -->
+    {/* <!-- Professional Services Card Mobile --> */}
     {professionalCard && professionalCard.title && (
       <div class="mb-8 text-center space-y-2 px-4">
         <h3 
           set:html={processMarkdown(professionalCard.title)}
         />
 
-        <!-- Feature Badges / Benefits -->
+        {/* <!-- Feature Badges / Benefits --> */}
         {professionalCard.badges && professionalCard.badges.length > 0 && (
           <div class="flex justify-center gap-4 text-white text-xs flex-wrap">
             {professionalCard.badges.map((badge: any) => (
@@ -264,12 +272,12 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
           </div>
         )}
 
-        <!-- Description -->
+        {/* <!-- Description --> */}
         {professionalCard.description && (
           <p class="text-white text-sm leading-relaxed" set:html={processMarkdown(professionalCard.description)}/>
         )}
 
-        <!-- Van image -->
+        {/* <!-- Van image --> */}
         {professionalCard.vanImage && (
           <div class="flex justify-center px-4">
             <img
@@ -280,7 +288,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
           </div>
         )}
 
-        <!-- Buttons -->
+        {/* <!-- Buttons --> */}
         <div class="flex justify-center gap-3 flex-wrap">
           {professionalCard.ctaButton?.enabled && (
             <a
@@ -343,7 +351,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
                   <div class="space-y-3">
                     {service.subServices?.map((subService: any) => (
                       <a
-                        href={`/services/${subService.slug}`}
+                        href={subService.url}
                         class="text-white flex items-center gap-2 text-base hover:text-evergreen-primary transition-colors"
                       >
                         <span>{subService.title}</span>
@@ -352,7 +360,7 @@ const phoneLink = `tel:${phoneNumber.replace(/\D/g, "")}`;
                     ))}
                     {showAllServicesLink && (
                       <a
-                        href={`/services/${service.slug}`}
+                        href={service.url}
                         class="text-white hover:text-evergreen-primary transition-colors flex items-center gap-2 text-base font-semibold"
                       >
                         All {service.title} Services

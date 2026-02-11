@@ -263,11 +263,10 @@ const scheduleCTAData = {
 // Offers Section
 const offersData = {
   heading:
-    service.offersSection?.heading || "Plumber Offers & Service Specials",
-  offers: service.offersSection || [],
-  disclaimer: service.offersSection?.disclaimer,
-  enabled:
-    service.offersSection !== undefined && service.offersSection.length > 0,
+    service.offersHeading || `${service.title} Offers & Service Specials`,
+  offers: service.offers || [],
+  disclaimer: service.offersDisclaimer,
+  enabled: service.offers && service.offers.length > 0,
 };
 
 // Related Services Section
@@ -312,15 +311,11 @@ const seoData = {
   />
 
   <!-- Offers & Specials -->
-  {
-    offersData.enabled && (
-      <OffersSpecials
-        heading={offersData.heading}
-        offers={offersData.offers}
-        disclaimer={offersData.disclaimer}
-      />
-    )
-  }
+  <OffersSpecials
+    heading={offersData.heading}
+    offers={offersData.offers}
+    disclaimer={offersData.disclaimer}
+  />
 
   <!-- Related Services -->
   {

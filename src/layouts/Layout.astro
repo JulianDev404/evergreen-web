@@ -5,6 +5,7 @@ import Footer from "../components/Footer.astro";
 import ChatButton from "../components/ChatButton.astro";
 import RecaptchaScript from "../components/RecaptchaScript.astro";
 import { getImageUrl } from "@/utils/payload";
+import ContactModal from "../components/ContactModal.astro";
 
 interface Props {
   title?: string;
@@ -40,10 +41,8 @@ const {
     <title>{title}</title>
     <link
       rel="icon"
-      type={siteSettings?.company?.favicon?.mimeType || "image/x-icon"}
-      href={siteSettings?.company?.favicon
-        ? getImageUrl(siteSettings.company.favicon)
-        : "/favicon.ico"}
+      type={siteSettings?.company?.favicon?.mimeType}
+      href={getImageUrl(siteSettings.company?.favicon)}
     />
     <RecaptchaScript />
   </head>
@@ -53,6 +52,7 @@ const {
       <slot />
     </main>
     <Footer />
+    <ContactModal company={siteSettings.company} getImageUrl={getImageUrl} />
     <!-- <ChatButton /> -->
   </body>
 </html>

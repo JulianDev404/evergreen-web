@@ -77,13 +77,14 @@ const {
         <!-- Email Us Button -->
         {
           primaryButton.enabled && (
-            <a
-              href={`${primaryButton.link}${contact.email}`}
+            <button
+              type="button"
+              onclick="openContactModal()"
               class="inline-flex items-center justify-center gap-2 bg-black text-white md:px-8 md:py-4 p-1 rounded-full font-bold transition-colors text-base border-2 border-evergreen-primary w-full sm:w-auto"
             >
               {primaryButton.showIcon && <Icon name="email" size={20} />}
               {primaryButton.text}
-            </a>
+            </button>
           )
         }
 

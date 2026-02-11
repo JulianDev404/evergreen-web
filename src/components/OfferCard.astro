@@ -1,0 +1,226 @@
+---
+// components/OfferCard.astro
+import { Icon } from "astro-icon/components";
+import { getImageUrl } from "../utils/payload";
+
+interface Props {
+  offer: {
+    image: any;
+    imageAlt?: string;
+    category: string;
+    priceType: "standard" | "off" | "value" | "financing";
+    originalPrice?: string;
+    price: string;
+    priceLabel?: string;
+    limitedTimeOffer?: boolean;
+    title: string;
+    subtitle?: string;
+    highlightedText?: string;
+    disclaimer?: string;
+    featuresTitle: string;
+    featuresSubtitle?: string;
+    features: { title: string }[];
+    ctaText: string;
+    ctaLink?: string;
+    ctaPhone?: string;
+  };
+  index?: number;
+  variant?: "desktop" | "mobile";
+}
+
+const { offer, index = 0, variant = "desktop" } = Astro.props;
+
+const isDesktop = variant === "desktop";
+const imageHeight = isDesktop ? "h-56" : "h-48";
+const badgeSize = isDesktop ? "text-lg" : "text-sm";
+const priceSize = isDesktop ? "text-3xl" : "text-xl";
+const priceLabelSize = isDesktop ? "text-lg" : "text-sm";
+const categorySize = isDesktop ? "text-xl" : "text-lg";
+const badgePadding = isDesktop ? "px-3 py-1.5" : "px-3 py-1.5";
+const pricePadding = isDesktop ? "px-4 py-2" : "px-3 py-1.5";
+---
+
+<div
+  class="bg-white rounded-2xl overflow-hidden shadow-lg h-full flex flex-col"
+>
+  {/* Image Header */}
+  <div class={`relative ${imageHeight}`}>
+    <img
+      src={getImageUrl(offer.image)}
+      alt={offer.imageAlt || offer.title}
+      class="w-full h-full object-cover"
+    />
+    {/* Gradient overlay */}
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"
+    >
+    </div>
+
+    {/* Limited Time Offer Badge - Top Left */}
+    <div class="absolute top-4 left-4 flex items-center gap-2">
+      {
+        offer.limitedTimeOffer && offer.priceType === "off" && (
+          <div
+            class={`bg-[#042F0A] border border-[#44EE5B] text-[#44EE5B] ${badgeSize} font-bold ${badgePadding} rounded-full flex items-center gap-1.5`}
+          >
+            <Icon name="circle-star" size={isDesktop ? 14 : 10} />
+            <span>Limited Time Offer</span>
+          </div>
+        )
+      }
+    </div>
+
+    {/* Price Badge - Top Right */}
+    <div class="absolute top-4 right-4 flex items-center gap-2">
+      {
+        offer.priceType === "standard" && (
+          <div
+            class={`bg-neutral-900 text-white ${pricePadding} rounded-full shadow-lg flex items-center gap-2`}
+          >
+            {offer.originalPrice && (
+              <span class="text-sm text-neutral-400 line-through">
+                ${offer.originalPrice}
+              </span>
+            )}
+            <span class={`text-[#44EE5B] ${priceSize} font-bold`}>
+              ${offer.price}
+            </span>
+          </div>
+        )
+      }
+
+      {
+        offer.priceType === "off" && (
+          <div
+            class={`bg-neutral-900 text-white ${pricePadding} rounded-full shadow-lg`}
+          >
+            <span class={`text-[#44EE5B] ${priceSize} font-bold`}>
+              ${offer.price}
+            </span>
+            <span class={`text-[#44EE5B] ${priceLabelSize} font-bold ml-1`}>
+              {offer.priceLabel || "OFF"}
+            </span>
+          </div>
+        )
+      }
+
+      {
+        offer.priceType === "value" && (
+          <div class="relative">
+            <div
+              class={`bg-evergreen-primary text-white ${pricePadding} rounded-lg shadow-lg`}
+            >
+              <span class={`text-white ${priceSize} font-bold`}>
+                ${offer.price}
+              </span>
+              <span class={`text-white ${priceLabelSize} font-bold ml-1`}>
+                {offer.priceLabel || "Value"}
+              </span>
+            </div>
+            {/* Rainbow stripe decoration */}
+            <div class="absolute -right-1 top-0 bottom-0 w-2 overflow-hidden rounded-r-lg">
+              <div
+                class="h-full w-full"
+                style="background: linear-gradient(180deg, #FF0000 0%, #FF7F00 20%, #FFFF00 40%, #00FF00 60%, #0000FF 80%, #8B00FF 100%);"
+              />
+            </div>
+          </div>
+        )
+      }
+
+      {
+        offer.priceType === "financing" && (
+          <div
+            class={`bg-neutral-900 text-[#44EE5B] ${priceSize} font-bold ${pricePadding} rounded-full shadow-lg flex items-center gap-2`}
+          >
+            <span>${offer.price}</span>
+            <span class={priceLabelSize}>{offer.priceLabel || "x 1 Year"}</span>
+          </div>
+        )
+      }
+    </div>
+
+    {/* Category label - Bottom Left on image */}
+    <div class="absolute bottom-4 left-6">
+      <span class={`text-white ${categorySize} font-bold drop-shadow-lg`}>
+        {offer.category}
+      </span>
+    </div>
+  </div>
+
+  {/* Content */}
+  <div class="p-6 lg:p-8 flex-1 flex flex-col">
+    <h3 class="text-black text-xl lg:text-2xl font-bold mb-2 leading-tight">
+      {offer.title}
+    </h3>
+
+    {
+      offer.subtitle && (
+        <p class="text-black text-base mb-3">{offer.subtitle}</p>
+      )
+    }
+
+    {
+      offer.disclaimer && (
+        <p class="text-neutral-700 text-xs inline-block bg-[#E5E5E5] rounded-full px-3 py-1.5 mb-4 uppercase tracking-wide font-bold w-fit">
+          {offer.disclaimer}
+        </p>
+      )
+    }
+
+    <div class="mb-4 flex-1">
+      <h4 class="text-evergreen-primary text-sm font-bold uppercase mb-3">
+        {offer.featuresTitle}
+      </h4>
+
+      {/* Highlighted text (orange) - opcional */}
+      {
+        offer.highlightedText && (
+          <p class="text-[#FF6B35] text-sm font-semibold mb-3">
+            {offer.highlightedText}
+          </p>
+        )
+      }
+
+      <ul class="space-y-2">
+        {
+          offer.features?.slice(0, 4).map((feature) => (
+            <li class="flex items-start gap-2">
+              <div class="flex-shrink-0 mt-0.5">
+                <Icon
+                  name="check-circle"
+                  size={18}
+                  class="text-evergreen-primary"
+                />
+              </div>
+              <span class="text-neutral-700 text-sm leading-relaxed">
+                {feature.title}
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+
+      {
+        offer.features && offer.features.length > 4 && (
+          <button
+            data-modal-trigger={`modal-${index}`}
+            class="text-evergreen-primary text-sm font-semibold mt-2 hover:underline cursor-pointer"
+          >
+            ...more
+          </button>
+        )
+      }
+    </div>
+
+    <a
+      href={offer.ctaPhone
+        ? `tel:${offer.ctaPhone.replace(/\D/g, "")}`
+        : offer.ctaLink || "#"}
+      class="block w-full bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 rounded-full transition-colors text-center text-sm shadow-lg uppercase tracking-wide"
+    >
+      {offer.ctaText}
+      {offer.ctaPhone}
+    </a>
+  </div>
+</div>

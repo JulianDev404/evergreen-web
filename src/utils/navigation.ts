@@ -6,7 +6,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
  * Construye la URL completa de un servicio basándose en su jerarquía
  * INCLUYE el slug del main service en la ruta de sus hijos
  */
-async function buildServicePath(service: any): Promise<string> {
+export async function buildServicePath(service: any): Promise<string> {
   try {
     // Validar que service existe
     if (!service) {
@@ -244,7 +244,7 @@ export async function buildNavigationMenu(menuItems: any[]) {
             }),
           );
 
-          const filteredSubItems = subItems.filter((item) => item !== null);
+          const filteredSubItems = subItems.filter((item) => item !== null).reverse();
 
           return {
             label: item.label,

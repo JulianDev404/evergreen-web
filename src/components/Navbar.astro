@@ -141,7 +141,7 @@ const initialBgClass = navbarBG ? "bg-black" : "bg-transparent";
                                 {/* Submenu Secundario */}
                                 <div
                                   class="fixed opacity-0 invisible group-hover/nested:opacity-100 group-hover/nested:visible transition-all duration-200 z-[101]"
-                                  style="left: calc(var(--submenu-left) + 20rem + 0.5rem); top: var(--submenu-top);"
+                                  style="left: calc(var(--submenu-left) + 17rem + 0.5rem); top: var(--submenu-top);"
                                 >
                                   <div class="w-56 bg-white rounded-lg shadow-2xl overflow-hidden p-2">
                                     {subItem.children.map((childItem: any) => (
@@ -203,13 +203,14 @@ const initialBgClass = navbarBG ? "bg-black" : "bg-transparent";
       <!-- Contact Actions -->
       <div class="flex items-center gap-3">
         <!-- Email Button -->
-        <a
-          href={`mailto:${contact.email}`}
-          class="hidden lg:flex items-center justify-center w-11 h-11 bg-transparent border-2 border-white hover:bg-white hover:text-black rounded-full transition-all group"
+        <button
+          type="button"
+          onclick="openContactModal()"
+          class="cursor-pointer hidden lg:flex items-center justify-center w-11 h-11 bg-transparent border-2 border-white hover:bg-white hover:text-black rounded-full transition-all group"
           aria-label="Email us"
         >
           <Icon name="email" size={20} class="text-white hover:text-black" />
-        </a>
+        </button>
 
         <!-- Call Now Button -->
         <a

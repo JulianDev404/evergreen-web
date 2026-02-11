@@ -4,13 +4,17 @@ import { loadEnv } from "payload/node";
 import tailwindcss from "@tailwindcss/vite";
 import vercel from "@astrojs/vercel/serverless";
 import icon from "astro-icon";
+import node from '@astrojs/node';
+
 
 loadEnv();
 
 // https://astro.build/config
 export default defineConfig({
   output: "server",
-  adapter: vercel({}),
+   adapter: node({
+    mode: 'standalone'
+  }),
 
   vite: {
     plugins: [tailwindcss()],

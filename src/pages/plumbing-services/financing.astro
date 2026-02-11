@@ -4,9 +4,13 @@ import PromiseSection from "../../components/services/Promise.astro";
 import OffersSpecialsFinancing from "../../components/OffersSpecialsFinancing.astro";
 import { Icon } from "astro-icon/components";
 import { getImageUrl, processMarkdown } from "../../utils/payload";
+import OfferCard from "../../components/OfferCard.astro";
+
+
 // Assets fallback
 import heroImageFallback from "../../assets/plan-2.jpg";
 import toolsImageFallback from "../../assets/mano.png";
+import OffersSpecials from "@/components/services/OffersSpecials.astro";
 
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
@@ -14,7 +18,7 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
 const getFinancingPage = async () => {
   try {
     const res = await fetch(
-      `${API_URL}/api/financing-pages?where[serviceType][equals]=plumbing`
+      `${API_URL}/api/financing-pages?where[serviceType][equals]=plumbing&depth=2`
     );
     const data = await res.json();
     return data.docs?.[0] || null;
@@ -27,7 +31,7 @@ const getFinancingPage = async () => {
 // Fetch Offers
 const getOffers = async (serviceType?: string) => {
   try {
-    let url = `${API_URL}/api/offers?where[active][equals]=true&limit=100&sort=createdAt`;
+    let url = `${API_URL}/api/offers?where[active][equals]=true&limit=100&sort=createdAt&depth=2`;
     if (serviceType) {
       url += `&where[serviceType][equals]=${serviceType}`;
     }
@@ -40,19 +44,37 @@ const getOffers = async (serviceType?: string) => {
   }
 };
 
+// Fetch Features
+const getFeatures = async () => {
+  try {
+    const res = await fetch(`${API_URL}/api/features?limit=100`);
+    const data = await res.json();
+    return data.docs || [];
+  } catch (error) {
+    console.error("Error fetching features:", error);
+    return [];
+  }
+};
+
 const pageData = await getFinancingPage();
 const offers = await getOffers(pageData?.offersSection?.filterByServiceType ? "plumbing" : undefined);
+const allFeatures = await getFeatures();
+
+// Resolve features relationship
+const resolveFeatures = (featureRefs: any[]) => {
+  if (!featureRefs || !Array.isArray(featureRefs)) return [];
+  return featureRefs.map((ref: any) => {
+    if (typeof ref === 'object' && ref.text) return ref;
+    const found = allFeatures.find((f: any) => f.id === ref || f.id === ref?.id);
+    return found || { text: ref };
+  }).filter(Boolean);
+};
 
 // Fallback data if no CMS data
 const hero = pageData?.hero || {
   heading: "Plumbing Finance Options Near Warwick, RI",
   ctaText: "Our Financing Options & Plans",
   ctaLink: "#financing-details",
-  breadcrumbs: [
-    { name: "Home", url: "/" },
-    { name: "Plumbing", url: "/plumbing-services" },
-    { name: "Financing Options", url: "/plumbing-services/financing" },
-  ],
 };
 
 const infoSection = pageData?.infoSection || {
@@ -79,22 +101,24 @@ const offersSection = pageData?.offersSection || {
   disclaimer: "* Call for Conditions & Restrictions / Present Coupon at Time of Service / Not Available to Combine with Other Offers Offer must be presented to Techs before any work begins *",
 };
 
-const promiseSection = pageData?.promiseSection || {
-  enabled: true,
+// Build promise section with resolved features
+const promiseSection = {
+  enabled: pageData?.promiseSection?.enabled ?? true,
   firstBlock: {
-    heading: "Our Promise to You is to Perform the Correct Plumbing Service at an Honest Price",
-    content: `When you need plumbing services, trust the experts at Evergreen Services. Our plumbers have the skills, knowledge, and tools to fix most problems on the spot.
+    heading: pageData?.promiseSection?.firstBlock?.heading || "Our Promise to You is to Perform the Correct Plumbing Service at an Honest Price",
+    content: pageData?.promiseSection?.firstBlock?.content || `When you need plumbing services, trust the experts at Evergreen Services. Our plumbers have the skills, knowledge, and tools to fix most problems on the spot.
 
 When your Evergreen Services plumber arrives at your home they will explain all of your options before plumbing repairs so you can make informed decisions before any work begins. We service and repair most brands of equipment, so you can trust us to perform a professional job.`,
-    cta: {
+    image: pageData?.promiseSection?.firstBlock?.image,
+    cta: pageData?.promiseSection?.firstBlock?.cta || {
       text: "Schedule Now",
       link: "/contact",
       icon: "calendar",
     },
   },
   secondBlock: {
-    heading: "Evergreen Services is Here for All of Your Needs!",
-    features: [
+    heading: pageData?.promiseSection?.secondBlock?.heading || "Evergreen Services is Here for All of Your Needs!",
+    features: resolveFeatures(pageData?.promiseSection?.secondBlock?.features) || [
       { text: "Upfront pricing – you'll never pay more than you're quoted" },
       { text: "Expert advice from professional, licensed & certified technicians" },
       { text: "We'll only sell you what you need" },
@@ -102,16 +126,15 @@ When your Evergreen Services plumber arrives at your home they will explain all 
       { text: "We stand by all recommended repairs" },
       { text: "Flexible scheduling, ask about same-day service!" },
     ],
-    contactText: "Still have questions? Contact Us for all your questions!",
-    bottomText: "Evergreen Services is Proudly & Professionally Offering Plumbing Services in the Warwick, RI area.",
-    cta: {
+    image: pageData?.promiseSection?.secondBlock?.image,
+    contactText: pageData?.promiseSection?.secondBlock?.contactText || "Still have questions? Contact Us for all your questions!",
+    bottomText: pageData?.promiseSection?.secondBlock?.bottomText || "Evergreen Services is Proudly & Professionally Offering Plumbing Services in the Warwick, RI area.",
+    cta: pageData?.promiseSection?.secondBlock?.cta || {
       text: "SEE ALL OFFERS!",
       link: "/offers",
     },
   },
 };
-
-
 
 const heroImage = hero.backgroundImage ? getImageUrl(hero.backgroundImage) : heroImageFallback.src;
 const toolsImage = infoSection.image ? getImageUrl(infoSection.image) : toolsImageFallback.src;
@@ -121,6 +144,7 @@ const seoTitle = pageData?.seo?.metaTitle || "Plumbing Finance Options | Evergre
 
 <Layout title={seoTitle} navbarBG={true}>
   <main class="bg-white">
+    <!-- Hero Section -->
     <section class="relative h-[50vh] min-h-[400px] flex items-center justify-center mt-20">
       <div class="absolute inset-0 z-0">
         <img
@@ -132,7 +156,7 @@ const seoTitle = pageData?.seo?.metaTitle || "Plumbing Finance Options | Evergre
       </div>
 
       <div class="relative z-10 container mx-auto px-6 text-center flex flex-col items-center gap-4">
-       <div class="flex items-center gap-2 text-sm text-neutral-300">
+        <div class="flex items-center gap-2 text-sm text-neutral-300">
           <a href="/" class="hover:text-evergreen-primary transition-colors">Home</a>
           <span>›</span>
           <a href="/plumbing-services" class="hover:text-evergreen-primary transition-colors">Plumbing</a>
@@ -153,6 +177,7 @@ const seoTitle = pageData?.seo?.metaTitle || "Plumbing Finance Options | Evergre
       </div>
     </section>
 
+    <!-- Info Section (Green Background) -->
     {infoSection.enabled !== false && (
       <section id="financing-details" class="bg-evergreen-primary py-12 lg:py-20 overflow-hidden">
         <div class="container mx-auto px-6">
@@ -186,14 +211,16 @@ const seoTitle = pageData?.seo?.metaTitle || "Plumbing Finance Options | Evergre
       </section>
     )}
 
+    <!-- Offers Section -->
     {offersSection.enabled !== false && offers.length > 0 && (
-      <OffersSpecialsFinancing
+      <OffersSpecials
         heading={offersSection.heading}
         offers={offers}
         disclaimer={offersSection.disclaimer}
       />
     )}
 
+    <!-- Promise Section -->
     {promiseSection.enabled !== false && (
       <PromiseSection promiseSection={promiseSection} />
     )}
