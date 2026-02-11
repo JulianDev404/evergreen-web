@@ -159,13 +159,14 @@ const phoneLink = `tel:${schedule.phone.replace(/\D/g, "")}`;
         </a>
 
         <!-- Schedule Now Button -->
-        <a
-          href={schedule.scheduleLink}
-          class="flex items-center justify-center gap-2 w-full max-w-md border border-neutral-800 text-white bg-neutral-900 font-bold py-4 rounded-full transition-colors text-center text-md"
+        <button
+          type="button"
+          onclick="openContactModal()"
+          class="cursor-pointer flex items-center justify-center gap-2 w-full max-w-md border border-neutral-800 text-white bg-neutral-900 font-bold py-4 rounded-full transition-colors text-center text-md"
         >
           <Icon name="clock-add" size={18} />
           {schedule.scheduleText}
-        </a>
+        </button>
       </div>
     </div>
   </div>
@@ -274,13 +275,14 @@ const phoneLink = `tel:${schedule.phone.replace(/\D/g, "")}`;
               </a>
 
               <!-- Schedule Now Button -->
-              <a
-                href={schedule.scheduleLink}
-                class="flex items-center justify-center gap-2 w-full border border-neutral-800 text-white bg-neutral-900 font-bold py-4 rounded-full transition-colors text-center text-sm"
+              <button
+                type="button"
+                onclick="openContactModal()"
+                class="cursor-pointer flex items-center justify-center gap-2 w-full border border-neutral-800 text-white bg-neutral-900 font-bold py-4 rounded-full transition-colors text-center text-sm"
               >
                 <Icon name="clock-add" size={16} />
                 {schedule.scheduleText}
-              </a>
+              </button>
             </div>
           </div>
         </div>
