@@ -2,7 +2,6 @@
 import { defineConfig } from "astro/config";
 import { loadEnv } from "payload/node";
 import tailwindcss from "@tailwindcss/vite";
-import vercel from "@astrojs/vercel/serverless";
 import icon from "astro-icon";
 import node from '@astrojs/node';
 

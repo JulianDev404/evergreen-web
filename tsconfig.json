@@ -5,8 +5,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "evergreen-payload": ["../evergreen-payload/src/payload.config.ts"],
-      "evergreen-payload/*": ["../evergreen-payload/src/*"],
       "@/*": ["src/*"]
     }
   }
