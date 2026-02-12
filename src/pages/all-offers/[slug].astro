@@ -4,9 +4,8 @@ import Layout from "../../layouts/Layout.astro";
 import Promise from "../../components/services/Promise.astro";
 import { Icon } from "astro-icon/components";
 import { getImageUrl } from "../../utils/payload";
-import imageds from "../../assets/plan-2.jpg";
-// Imagen por defecto para el hero
 import defaultHeroImage from "../../assets/plan-2.jpg";
+
 export const prerender = false;
 
 const { slug } = Astro.params;
@@ -23,27 +22,24 @@ if (!page) {
   return Astro.redirect("/404");
 }
 
-const { heroSection, offersSection, promiseSection } = page;
+const { heroSection, offersSection, promiseSection, seo } = page;
 const offers = offersSection?.offers || [];
 
 // Función helper para limpiar teléfonos
 const cleanPhone = (phone: string) => phone?.replace(/\D/g, "") || "";
 
-export async function getStaticPaths() {
-  const API_URL = import.meta.env.PUBLIC_API_URL;
-  const res = await fetch(`${API_URL}/api/offer-pages?limit=100`);
-  const data = await res.json();
+// Crear versión serializable de ofertas con URLs resueltas para el script
+const offersForScript = offers.map((offer: any) => ({
+  ...offer,
+  imageUrl: getImageUrl(offer.image),
+}));
 
-  return data.docs.map((page: any) => ({
-    params: { slug: page.slug },
-  }));
-}
 const heroImageUrl = heroSection?.backgroundImage
   ? getImageUrl(heroSection.backgroundImage)
   : defaultHeroImage.src;
 ---
 
-<Layout title={`${page.title} | Evergreen Services`} navbarBG={true}>
+<Layout seoData={seo} navbarBG={true}>
   {
     heroSection?.enabled && (
       <section class="bg-white">
@@ -63,30 +59,31 @@ const heroImageUrl = heroSection?.backgroundImage
                 aria-label="Breadcrumb"
                 class="flex items-center gap-2 text-sm text-white"
               >
-                {heroSection.breadcrumbs.map((breadcrumb, index) => (
-                  <span class="flex items-center gap-2">
-                    {breadcrumb.url ? (
-                      <a
-                        href={breadcrumb.url}
-                        class="hover:text-evergreen-primary transition-colors"
-                      >
-                        {breadcrumb.label}
-                      </a>
-                    ) : (
-                      <span class="opacity-90">{breadcrumb.label}</span>
-                    )}
-                    {index < heroSection.breadcrumbs.length - 1 && (
-                      <span class="text-white/60">&rsaquo;</span>
-                    )}
-                  </span>
-                ))}
+                {heroSection.breadcrumbs.map(
+                  (breadcrumb: any, index: number) => (
+                    <span class="flex items-center gap-2">
+                      {breadcrumb.url ? (
+                        <a
+                          href={breadcrumb.url}
+                          class="hover:text-evergreen-primary transition-colors"
+                        >
+                          {breadcrumb.label}
+                        </a>
+                      ) : (
+                        <span class="opacity-90">{breadcrumb.label}</span>
+                      )}
+                      {index < heroSection.breadcrumbs.length - 1 && (
+                        <span class="text-white/60">&rsaquo;</span>
+                      )}
+                    </span>
+                  ),
+                )}
               </nav>
             )}
 
             <h1 class="text-white text-3xl lg:text-4xl xl:text-5xl font-bold text-center max-w-4xl leading-tight">
               {heroSection.heading}
             </h1>
-
             <a
               href={heroSection.ctaLink}
               class="bg-evergreen-primary hover:bg-evergreen-600 text-white px-6 lg:px-8 py-3 lg:py-3.5 rounded-full font-bold text-base lg:text-lg transition-colors shadow-lg"
@@ -108,6 +105,7 @@ const heroImageUrl = heroSection?.backgroundImage
           </h2>
         </div>
 
+        {/* Desktop Carousel */}
         <div class="hidden lg:block container mx-auto px-16 mb-12">
           <div class="relative max-w-7xl mx-auto">
             <button
@@ -122,11 +120,11 @@ const heroImageUrl = heroSection?.backgroundImage
               id="desktop-offers-container"
               class="flex justify-center gap-8 mb-8"
             >
-              {offers.slice(0, 2).map((offer, index) => (
+              {offers.slice(0, 2).map((offer: any, index: number) => (
                 <div class="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg">
                   <div class="relative h-80">
                     <img
-                      src={getImageUrl(offer.image.url)}
+                      src={getImageUrl(offer.image)}
                       alt={offer.imageAlt || offer.title}
                       class="w-full h-full object-cover"
                     />
@@ -167,14 +165,14 @@ const heroImageUrl = heroSection?.backgroundImage
                       </p>
 
                       <ul class="space-y-2.5">
-                        {offer.features?.slice(0, 4).map((feature) => (
+                        {offer.features?.slice(0, 4).map((feature: any) => (
                           <li class="flex items-start gap-2.5">
-                            <div class="mt-0.5">
-                              {/* <Icon
+                            <div class="flex-shrink-0 mt-0.5">
+                              <Icon
                                 name="check-circle"
                                 size={18}
                                 class="text-evergreen-primary"
-                              /> */}
+                              />
                             </div>
                             <span class="text-neutral-700 text-sm font-semibold leading-relaxed">
                               {feature.title}
@@ -192,7 +190,6 @@ const heroImageUrl = heroSection?.backgroundImage
                         </button>
                       )}
                     </div>
-
                     <a
                       href={
                         offer.ctaLink || `tel:${cleanPhone(offer.ctaPhone)}`
@@ -228,15 +225,16 @@ const heroImageUrl = heroSection?.backgroundImage
           </div>
         </div>
 
+        {/* Mobile Carousel */}
         <div class="lg:hidden">
           <div class="offers-carousel-container overflow-hidden">
             <div class="offers-carousel-track flex transition-transform duration-300 ease-in-out">
-              {offers.map((offer, index) => (
+              {offers.map((offer: any, index: number) => (
                 <div class="offers-carousel-slide w-full flex-shrink-0 px-4 py-6">
                   <div class="bg-white rounded-2xl overflow-hidden shadow-lg mx-auto max-w-sm">
                     <div class="relative h-[400px]">
                       <img
-                        src={getImageUrl(offer.image.url)}
+                        src={getImageUrl(offer.image)}
                         alt={offer.imageAlt || offer.title}
                         class="w-full h-full object-cover"
                       />
@@ -269,9 +267,9 @@ const heroImageUrl = heroSection?.backgroundImage
                         </p>
 
                         <ul class="space-y-2">
-                          {offer.features?.slice(0, 3).map((feature) => (
+                          {offer.features?.slice(0, 3).map((feature: any) => (
                             <li class="flex items-start gap-2">
-                              <div class="mt-0.5">
+                              <div class="flex-shrink-0 mt-0.5">
                                 <Icon
                                   name="check-circle"
                                   size={16}
@@ -294,7 +292,6 @@ const heroImageUrl = heroSection?.backgroundImage
                           </button>
                         )}
                       </div>
-
                       <a
                         href={
                           offer.ctaPhone
@@ -316,7 +313,7 @@ const heroImageUrl = heroSection?.backgroundImage
 
           {offers.length > 1 && (
             <div class="flex justify-center gap-2 mt-2 mb-6">
-              {offers.map((_, index) => (
+              {offers.map((_: any, index: number) => (
                 <button
                   type="button"
                   class={`offers-carousel-dot w-2.5 h-2.5 rounded-full transition-colors ${index === 0 ? "bg-evergreen-primary" : "bg-neutral-600"}`}
@@ -349,8 +346,9 @@ const heroImageUrl = heroSection?.backgroundImage
 
   {promiseSection?.enabled && <Promise promiseSection={promiseSection} />}
 
+  {/* Modals */}
   {
-    offers.map((offer, index) => (
+    offers.map((offer: any, index: number) => (
       <div
         id={`modal-${index}`}
         class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-4"
@@ -367,7 +365,7 @@ const heroImageUrl = heroSection?.backgroundImage
           <div class="overflow-y-auto max-h-[90vh]">
             <div class="relative h-48 lg:h-72">
               <img
-                src={getImageUrl(offer.image.url)}
+                src={getImageUrl(offer.image)}
                 alt={offer.imageAlt || offer.title}
                 class="w-full h-full object-cover"
               />
@@ -405,9 +403,9 @@ const heroImageUrl = heroSection?.backgroundImage
                 </p>
 
                 <ul class="space-y-3 lg:space-y-4">
-                  {offer.features?.map((feature) => (
+                  {offer.features?.map((feature: any) => (
                     <li class="flex items-start gap-2 lg:gap-3">
-                      <div class="mt-0.5">
+                      <div class="flex-shrink-0 mt-0.5">
                         <Icon
                           name="check-circle"
                           size={18}
@@ -422,10 +420,10 @@ const heroImageUrl = heroSection?.backgroundImage
                 </ul>
               </div>
               <a
-                href={offer.ctaLink || "#"}
+                href={offer.ctaLink || `tel:${cleanPhone(offer.ctaPhone)}`}
                 class="block w-fit bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3 px-16 lg:py-4 rounded-full transition-colors text-center text-base lg:text-lg shadow-lg"
               >
-                {offer.ctaText}
+                {offer.ctaText} {offer.ctaPhone}
               </a>
             </div>
           </div>
@@ -435,7 +433,7 @@ const heroImageUrl = heroSection?.backgroundImage
   }
 </Layout>
 
-<script define:vars={{ offers, API_URL: API_URL, getImageUrl: getImageUrl }}>
+<script define:vars={{ offers: offersForScript }}>
   let currentDesktopPage = 0;
   const offersPerPage = 2;
   const totalOffers = offers.length;
@@ -453,10 +451,8 @@ const heroImageUrl = heroSection?.backgroundImage
     const endIndex = Math.min(startIndex + offersPerPage, totalOffers);
     const currentOffers = offers.slice(startIndex, endIndex);
 
-    // Limpiar contenedor
     desktopContainer.innerHTML = "";
 
-    // Renderizar las ofertas actuales
     currentOffers.forEach((offer, relativeIndex) => {
       const globalIndex = startIndex + relativeIndex;
 
@@ -466,7 +462,7 @@ const heroImageUrl = heroSection?.backgroundImage
       card.innerHTML = `
         <div class="relative h-80">
           <img
-            src="${getImageUrl(offer.image?.url)}"
+            src="${offer.imageUrl}"
             alt="${offer.title}"
             class="w-full h-full object-cover"
           />
@@ -475,7 +471,7 @@ const heroImageUrl = heroSection?.backgroundImage
           <div class="absolute top-4 right-4 bg-neutral-900 rounded-full px-5 py-3 flex items-center gap-2 shadow-lg">
             ${offer.originalPrice ? `<span class="text-sm text-neutral-400 line-through">$${offer.originalPrice}</span>` : ""}
             <span class="text-[#44EE5B] text-3xl font-bold">$${offer.price}</span>
-            ${offer.monthlyPayment ? '<span class="text-[#44EE5B] text-3xl font-bold">Value</span>' : ""}
+            ${offer.monthlyPayment ? '<span class="text-sm text-neutral-300">Value</span>' : ""}
           </div>
 
           <div class="absolute bottom-4 left-6">
@@ -487,25 +483,27 @@ const heroImageUrl = heroSection?.backgroundImage
           <h4 class="text-black text-2xl font-bold mb-4 leading-tight">${offer.title}</h4>
 
           <div class="mb-6">
-            <h5 class="text-evergreen-primary text-sm font-bold uppercase mb-1">${offer.featuresTitle}</h5>
-            <p class="text-neutral-600 text-sm mb-4">${offer.featuresSubtitle}</p>
+            <h5 class="text-evergreen-primary text-sm font-bold uppercase mb-1">${offer.featuresTitle || ""}</h5>
+            <p class="text-neutral-600 text-sm mb-4">${offer.featuresSubtitle || ""}</p>
 
             <ul class="space-y-2.5">
-              ${offer.features
-                ?.slice(0, 4)
-                .map(
-                  (feature) => `
+              ${
+                offer.features
+                  ?.slice(0, 4)
+                  .map(
+                    (feature) => `
                 <li class="flex items-start gap-2.5">
                   <div class="flex-shrink-0 mt-0.5">
-                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20ZM10 18C12.2333 18 14.125 17.225 15.675 15.675C17.225 14.125 18 12.2333 18 10C18 7.76667 17.225 5.875 15.675 4.325C14.125 2.775 12.2333 2 10 2C7.76667 2 5.875 2.775 4.325 4.325C2.775 5.875 2 7.76667 2 10C2 12.2333 2.775 14.125 4.325 15.675C5.875 17.225 7.76667 18 10 18Z" fill="#0FA623"/>
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8.6 14.6L15.65 7.55L14.25 6.15L8.6 11.8L5.75 8.95L4.35 10.35L8.6 14.6ZM10 20C8.61667 20 7.31667 19.7375 6.1 19.2125C4.88333 18.6875 3.825 17.975 2.925 17.075C2.025 16.175 1.3125 15.1167 0.7875 13.9C0.2625 12.6833 0 11.3833 0 10C0 8.61667 0.2625 7.31667 0.7875 6.1C1.3125 4.88333 2.025 3.825 2.925 2.925C3.825 2.025 4.88333 1.3125 6.1 0.7875C7.31667 0.2625 8.61667 0 10 0C11.3833 0 12.6833 0.2625 13.9 0.7875C15.1167 1.3125 16.175 2.025 17.075 2.925C17.975 3.825 18.6875 4.88333 19.2125 6.1C19.7375 7.31667 20 8.61667 20 10C20 11.3833 19.7375 12.6833 19.2125 13.9C18.6875 15.1167 17.975 16.175 17.075 17.075C16.175 17.975 15.1167 18.6875 13.9 19.2125C12.6833 19.7375 11.3833 20 10 20Z" fill="#0FA623"/>
                     </svg>
                   </div>
-                  <span class="text-neutral-700 text-sm font-semibold leading-relaxed">${feature.title || feature.text}</span>
+                  <span class="text-neutral-700 text-sm font-semibold leading-relaxed">${feature.title}</span>
                 </li>
               `,
-                )
-                .join("")}
+                  )
+                  .join("") || ""
+              }
             </ul>
 
             ${
@@ -521,12 +519,11 @@ const heroImageUrl = heroSection?.backgroundImage
                 : ""
             }
           </div>
-
           <a
-            href="${offer.ctaLink || `tel:${offer.ctaPhone?.replace(/\D/g, "") || ""}`}"
+            href="${offer.ctaLink || `tel:${(offer.ctaPhone || "").replace(/\D/g, "")}`}"
             class="block w-fit bg-evergreen-primary hover:bg-evergreen-600 text-white font-bold py-3.5 px-16 rounded-full transition-colors text-center text-base shadow-lg uppercase tracking-wide"
           >
-            ${offer.ctaText} ${offer.ctaPhone || ""}
+            ${offer.ctaText || ""} ${offer.ctaPhone || ""}
           </a>
         </div>
       `;
@@ -534,15 +531,12 @@ const heroImageUrl = heroSection?.backgroundImage
       desktopContainer.appendChild(card);
     });
 
-    // Re-attach modal triggers
     attachModalTriggers();
   }
 
   function updateDesktopCarousel() {
-    // Renderizar nuevas ofertas
     renderDesktopOffers();
 
-    // Actualizar dots
     desktopDots.forEach((dot, index) => {
       dot.classList.toggle(
         "bg-evergreen-primary",
@@ -551,7 +545,6 @@ const heroImageUrl = heroSection?.backgroundImage
       dot.classList.toggle("bg-neutral-600", index !== currentDesktopPage);
     });
 
-    // Habilitar/deshabilitar botones
     if (desktopPrev) {
       desktopPrev.disabled = currentDesktopPage === 0;
       desktopPrev.style.opacity = currentDesktopPage === 0 ? "0.5" : "1";
@@ -652,5 +645,7 @@ const heroImageUrl = heroSection?.backgroundImage
 
   // Initialize
   attachModalTriggers();
-  updateDesktopCarousel();
+  if (totalOffers > 0) {
+    updateDesktopCarousel();
+  }
 </script>

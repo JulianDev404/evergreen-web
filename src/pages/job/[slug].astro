@@ -1,7 +1,7 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { getImageUrl, processMarkdown } from "../../utils/payload";
+import { getImageUrl, processMarkdown, formatDateAgo } from "../../utils/payload";
 
 const { slug } = Astro.params;
 const API_URL = import.meta.env.PUBLIC_API_URL;
@@ -57,20 +57,6 @@ const [job, pageData, siteSettings] = await Promise.all([
 if (!job) {
   return Astro.redirect("/404");
 }
-
-// Formatters
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffTime = Math.abs(now.getTime() - date.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "1 day ago";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return `${Math.floor(diffDays / 30)} months ago`;
-};
 
 const formatJobType = (type: string) => {
   return type
@@ -194,9 +180,10 @@ const whyWorkImage = whyWorkWithUs.image ? getImageUrl(whyWorkWithUs.image) : "/
 const jobForYouImage = jobIsForYouIf.image ? getImageUrl(jobIsForYouIf.image) : "/images/team-van.png";
 const differentImage = whatMakesUsDifferent.image ? getImageUrl(whatMakesUsDifferent.image) : "/images/wrench.png";
 const ctaImage = cta.image ? getImageUrl(cta.image) : "/images/red-wrench.png";
+
 ---
 
-<Layout title={`${job.title} | Evergreen Services`} navbarBG={true}>
+<Layout seoData={job.seo} navbarBG={true}>
   <main class="bg-white">
     <!-- Header Section -->
     <section class="pt-28 lg:pt-32 pb-8 border-b border-neutral-200">
@@ -232,7 +219,7 @@ const ctaImage = cta.image ? getImageUrl(cta.image) : "/images/red-wrench.png";
               </div>
               <div class="flex items-center gap-1.5">
                 <Icon name="clock" class="w-4 h-4" />
-                <span>{formatDate(job.createdAt)}</span>
+                <span>{formatDateAgo(job.createdAt)}</span>
               </div>
             </div>
           </div>

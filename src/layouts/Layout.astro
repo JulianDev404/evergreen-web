@@ -8,14 +8,17 @@ import { getImageUrl } from "@/utils/payload";
 import ContactModal from "../components/ContactModal.astro";
 
 interface Props {
-  title?: string;
-  description?: string;
-  ogImage?: string;
-  schema?: string;
+  seoData: {
+    metaTitle: string;
+    metaDescription: string;
+    keywords?: string;
+    schemaMarkup?: string;
+  };
   navbarBG?: boolean;
 }
 
 const API_URL = import.meta.env.PUBLIC_API_URL;
+const { seoData, navbarBG = false } = Astro.props;
 
 const getSiteSettings = async () => {
   const res = await fetch(`${API_URL}/api/globals/site-settings?depth=2`);
@@ -24,12 +27,65 @@ const getSiteSettings = async () => {
 };
 
 const siteSettings = await getSiteSettings();
+const { company, contact, socialMedia } = siteSettings;
 
-const {
-  title = "Evergreen Services",
-  description = "Professional home services you can trust",
-  navbarBG = false,
-} = Astro.props;
+const { metaTitle, metaDescription, keywords, schemaMarkup } = seoData;
+
+// URL canónica de la página actual
+const canonicalURL = Astro.url.href;
+
+// ============================================
+// SCHEMA: Manual o Auto-generado
+// ============================================
+const generateAutoSchema = () => {
+  return {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: company?.name || "Evergreen Services",
+    description: metaDescription,
+    url: Astro.url.origin,
+    telephone: contact?.phone,
+    email: contact?.email,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: contact?.address?.street,
+      addressLocality: contact?.address?.city,
+      addressRegion: contact?.address?.state || "RI",
+      postalCode: contact?.address?.zip,
+      addressCountry: "US",
+    },
+    logo: company?.logo ? getImageUrl(company.logo) : undefined,
+    image: company?.logo ? getImageUrl(company.logo) : undefined,
+    priceRange: "$$",
+    sameAs: [
+      socialMedia?.facebook,
+      socialMedia?.instagram,
+      socialMedia?.twitter,
+      socialMedia?.linkedin,
+      socialMedia?.youtube,
+      socialMedia?.yelp,
+      socialMedia?.googleBusiness,
+    ].filter(Boolean),
+  };
+};
+
+let finalSchema = null;
+if (schemaMarkup) {
+  try {
+    finalSchema =
+      typeof schemaMarkup === "string"
+        ? JSON.parse(schemaMarkup)
+        : schemaMarkup;
+  } catch (e) {
+    console.error("Error parsing schema:", e);
+    finalSchema = generateAutoSchema();
+  }
+} else {
+  finalSchema = generateAutoSchema();
+}
+
+// Limpiar campos undefined
+finalSchema = JSON.parse(JSON.stringify(finalSchema));
 ---
 
 <!doctype html>
@@ -37,13 +93,37 @@ const {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
-    <title>{title}</title>
+
+    <!-- Basic Meta Tags -->
+    <title>{metaTitle ? metaTitle : "Evergreen Services RI"}</title>
+    <meta name="description" content={metaDescription} />
+    {keywords && <meta name="keywords" content={keywords} />}
+
+    <!-- Canonical -->
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Evergreen Services RI" />
+    <meta property="og:title" content={metaTitle} />
+    <meta property="og:description" content={metaDescription} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={metaTitle} />
+    <meta name="twitter:description" content={metaDescription} />
+
+    <!-- Favicon -->
     <link
       rel="icon"
-      type={siteSettings?.company?.favicon?.mimeType}
-      href={getImageUrl(siteSettings.company?.favicon)}
+      type={company?.favicon?.mimeType}
+      href={getImageUrl(company?.favicon)}
     />
+
+    <!-- Google Schema JSON-LD -->
+    <script type="application/ld+json" set:html={JSON.stringify(finalSchema)} />
+
     <RecaptchaScript />
   </head>
   <body class="min-h-screen flex flex-col bg-white">
@@ -53,6 +133,5 @@ const {
     </main>
     <Footer />
     <ContactModal company={siteSettings.company} getImageUrl={getImageUrl} />
-    <!-- <ChatButton /> -->
   </body>
 </html>

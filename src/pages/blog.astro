@@ -26,10 +26,19 @@ const getBlogArticles = async () => {
   return data.docs || [];
 };
 
-const [siteSettings, contactPages, articles] = await Promise.all([
+const getBlogPage = async () => {
+  const res = await fetch(
+    `${API_URL}/api/globals/blog-page?depth=2&draft=false`,
+  );
+  const data = await res.json();
+  return data || [];
+};
+
+const [siteSettings, contactPages, articles, blogPage] = await Promise.all([
   getSiteSettings(),
   getContactPages(),
   getBlogArticles(),
+  getBlogPage(),
 ]);
 
 const { company } = siteSettings;
@@ -42,19 +51,9 @@ const generateBreadcrumbs = () => {
     { name: "Blog", url: "/blog" },
   ];
 };
-
-// Format date helper
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
 ---
 
-<Layout title="Blog | Evergreen Services" navbarBG={true}>
+<Layout seoData={blogPage} navbarBG={true}>
   <section
     class="pt-28 lg:pt-32 pb-16 bg-white flex flex-col items-center gap-12"
   >

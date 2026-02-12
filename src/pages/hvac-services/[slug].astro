@@ -277,18 +277,9 @@ const financingData = service.financingSection;
 
 // FAQ Section
 const faqData = service.faqSection;
-
-// SEO
-const seoData = {
-  title: service.seo?.title || `${service.title} | Evergreen Services`,
-  description:
-    service.seo?.description ||
-    service.shortDescription ||
-    `Professional ${service.title} services in Warwick, RI.`,
-};
 ---
 
-<Layout title={seoData.title} description={seoData.description}>
+<Layout seoData={service.seo}>
   <!-- Hero -->
   <ServiceHero
     breadcrumbs={heroData.breadcrumbs}

@@ -2,7 +2,7 @@
 // apps/web/src/pages/blog/[slug].astro
 import Layout from "../../layouts/Layout.astro";
 import { Icon } from "astro-icon/components";
-import { getImageUrl, processMarkdown } from "../../utils/payload";
+import { getImageUrl, processMarkdown, formatDate } from "../../utils/payload";
 
 const API_URL = import.meta.env.PUBLIC_API_URL;
 const { slug } = Astro.params;
@@ -40,16 +40,6 @@ if (!article) {
 const { company } = siteSettings;
 const { contactForm } = contactPages;
 
-// Format date
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
 // Get related articles
 const previousArticle = article.relatedArticles?.find(
   (rel: any) => rel.type === "previous",
@@ -68,7 +58,7 @@ const generateBreadcrumbs = () => {
 };
 ---
 
-<Layout title={`${article.title} | Evergreen Services`} navbarBG={true}>
+<Layout seoData={article.seo} navbarBG={true}>
   <section class="pt-28 lg:pt-32 pb-16 bg-white">
     <div class="container mx-auto max-w-6xl px-6">
       <div class="flex justify-between items-start gap-8">
@@ -115,7 +105,7 @@ const generateBreadcrumbs = () => {
             </div>
             <div class="flex items-center gap-2">
               <Icon name="calendar" size={18} />
-              <span>Published on {article.publishedDate}</span>
+              <span>Published on {formatDate(article.publishedDate)}</span>
             </div>
           </div>
 
@@ -243,4 +233,5 @@ const generateBreadcrumbs = () => {
       </div>
     </div>
   </section>
+  <!-- </Layout> -->
 </Layout>
