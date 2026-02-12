@@ -435,7 +435,7 @@ const heroImageUrl = heroSection?.backgroundImage
   }
 </Layout>
 
-<script define:vars={{ offers, API_URL: API_URL }}>
+<script define:vars={{ offers, API_URL: API_URL, getImageUrl: getImageUrl }}>
   let currentDesktopPage = 0;
   const offersPerPage = 2;
   const totalOffers = offers.length;
@@ -466,7 +466,7 @@ const heroImageUrl = heroSection?.backgroundImage
       card.innerHTML = `
         <div class="relative h-80">
           <img
-            src="${API_URL + offer.image?.url}"
+            src="${getImageUrl(offer.image?.url)}"
             alt="${offer.title}"
             class="w-full h-full object-cover"
           />

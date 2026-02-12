@@ -1,5 +1,6 @@
 ---
 import { Icon } from "astro-icon/components";
+import { getImageUrl } from "@/utils/payload";
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
 // Obtener la configuración del sitio
@@ -23,7 +24,7 @@ const { company, contact, socialMedia, footer, legal, payment } = siteSettings;
         <!-- Company Info -->
         <div class="space-y-2">
           <img
-            src={API_URL + company.logo.url}
+            src={getImageUrl(company.logo)}
             alt={company.name}
             class="h-16 w-auto mb-4"
           />
@@ -207,7 +208,7 @@ const { company, contact, socialMedia, footer, legal, payment } = siteSettings;
       <!-- Logo -->
       <div class="flex justify-center mb-4">
         <img
-          src={API_URL + company.logo.url}
+          src={getImageUrl(company.logo)}
           alt={company.name}
           class="h-16 w-auto"
         />

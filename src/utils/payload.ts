@@ -263,19 +263,10 @@ export function getImageUrl(image: any): string {
   if (!image) return "";
 
   if (typeof image === "string") {
-    if (image.startsWith("http")) return image;
-    return `${API_URL}${image}`;
+    return image;
   }
 
-  if (image.url) {
-    if (image.url.startsWith("http")) return image.url;
-    if (image.url.startsWith("/api/")) {
-      return `${API_URL}${image.url}`;
-    }
-    return `${API_URL}${image.url.startsWith("/") ? "" : "/"}${image.url}`;
-  }
-
-  return "";
+  return image?.url || "";
 }
 
 export function formatPhoneLink(phone: string): string {
