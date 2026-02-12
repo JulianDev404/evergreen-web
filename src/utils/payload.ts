@@ -258,14 +258,24 @@ export function processSimpleMarkdown(text: string | undefined): string {
     '<strong class="text-evergreen-primary font-semibold">$1</strong>',
   );
 }
+
 export function getImageUrl(image: any): string {
   if (!image) return "";
 
   if (typeof image === "string") {
-    return image;
+    if (image.startsWith("http")) return image;
+    return `${API_URL}${image}`;
   }
 
-  return image?.url || "";
+  if (image.url) {
+    if (image.url.startsWith("http")) return image.url;
+    if (image.url.startsWith("/api/")) {
+      return `${API_URL}${image.url}`;
+    }
+    return `${API_URL}${image.url.startsWith("/") ? "" : "/"}${image.url}`;
+  }
+
+  return "";
 }
 
 export function formatPhoneLink(phone: string): string {
