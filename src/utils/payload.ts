@@ -260,22 +260,22 @@ export function processSimpleMarkdown(text: string | undefined): string {
 }
 
 export function getImageUrl(image: any): string {
-  if (!image) return "";
+  // if (!image) return "";
 
-  if (typeof image === "string") {
-    if (image.startsWith("http")) return image;
-    return `${API_URL}${image}`;
-  }
+  // if (typeof image === "string") {
+  //   if (image.startsWith("http")) return image;
+  //   return `${API_URL}${image}`;
+  // }
 
-  if (image.url) {
-    if (image.url.startsWith("http")) return image.url;
-    if (image.url.startsWith("/api/")) {
-      return `${API_URL}${image.url}`;
-    }
-    return `${API_URL}${image.url.startsWith("/") ? "" : "/"}${image.url}`;
-  }
-
-  return "";
+  // if (image.url) {
+  //   if (image.url.startsWith("http")) return image.url;
+  //   if (image.url.startsWith("/api/")) {
+  //     return `${API_URL}${image.url}`;
+  //   }
+  //   return `${API_URL}${image.url.startsWith("/") ? "" : "/"}${image.url}`;
+  // }
+  // console.log(image.url);
+  return image.url;
 }
 
 export function formatPhoneLink(phone: string): string {
