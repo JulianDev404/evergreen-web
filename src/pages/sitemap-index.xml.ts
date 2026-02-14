@@ -1,7 +1,7 @@
 // apps/web/src/pages/sitemap-index.xml.ts
 import type { APIRoute } from "astro";
 
-const SITE_URL = import.meta.env.SITE_URL || "https://evergreenservicesri.com";
+const SITE_URL = import.meta.env.SITE_URL || "https://evergreenplumbingri.com";
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
 interface Service {
@@ -38,7 +38,7 @@ const staticPages = [
 async function fetchServices(): Promise<Service[]> {
   try {
     const res = await fetch(
-      `${API_URL}/api/services?where[active][equals]=true&where[hasPage][equals]=true&limit=1000&depth=0`
+      `${API_URL}/api/services?where[active][equals]=true&where[hasPage][equals]=true&limit=1000&depth=0`,
     );
     if (res.ok) {
       const data = await res.json();
@@ -53,7 +53,7 @@ async function fetchServices(): Promise<Service[]> {
 async function fetchPosts(): Promise<Post[]> {
   try {
     const res = await fetch(
-      `${API_URL}/api/posts?where[_status][equals]=published&limit=1000&depth=0`
+      `${API_URL}/api/posts?where[_status][equals]=published&limit=1000&depth=0`,
     );
     if (res.ok) {
       const data = await res.json();
@@ -68,7 +68,7 @@ async function fetchPosts(): Promise<Post[]> {
 async function fetchJobs(): Promise<Job[]> {
   try {
     const res = await fetch(
-      `${API_URL}/api/jobs?where[active][equals]=true&limit=1000&depth=0`
+      `${API_URL}/api/jobs?where[active][equals]=true&limit=1000&depth=0`,
     );
     if (res.ok) {
       const data = await res.json();
@@ -142,4 +142,4 @@ ${urls.join("\n")}
       "Content-Type": "application/xml; charset=utf-8",
     },
   });
-};  
+};

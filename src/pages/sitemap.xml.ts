@@ -1,7 +1,7 @@
 // apps/web/src/pages/sitemap.xml.ts
 import type { APIRoute } from "astro";
 
-const SITE_URL = import.meta.env.SITE_URL || "https://evergreenservicesri.com";
+const SITE_URL = import.meta.env.SITE_URL || "https://evergreenplumbingri.com";
 const API_URL = import.meta.env.PUBLIC_API_URL;
 
 interface Service {
