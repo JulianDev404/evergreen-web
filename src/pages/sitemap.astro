@@ -1,9 +1,18 @@
 ---
 // apps/web/src/pages/sitemap.astro
+import Layout from "../layouts/Layout.astro";
 import { buildServicePath } from "../utils/navigation";
 
 const SITE_URL = import.meta.env.SITE_URL || "https://evergreenplumbingri.com";
 const API_URL = import.meta.env.PUBLIC_API_URL;
+
+interface Service {
+  slug: string;
+  title: string;
+  updatedAt: string;
+  isMainService?: boolean;
+  parentService?: any;
+}
 
 interface Post {
   slug: string;
@@ -17,52 +26,45 @@ interface Job {
   updatedAt: string;
 }
 
-const staticPages = [
-  { url: "/", title: "Home" },
+interface Offer {
+  slug: string;
+  title: string;
+  updatedAt: string;
+}
+
+// Páginas estáticas organizadas por categoría
+const mainPages = [{ url: "/", title: "Home" }];
+
+const aboutPages = [
   { url: "/about-us", title: "About Us" },
+  { url: "/our-guarantees", title: "Our Guarantees" },
+  { url: "/service-area", title: "Service Area" },
+];
+
+const contactPages = [
   { url: "/contact-us", title: "Contact Us" },
   { url: "/customer-service", title: "Customer Service" },
   { url: "/24-7-emergency-services", title: "24/7 Emergency Services" },
-  { url: "/financing-options-plans", title: "Financing Options & Plans" },
-  { url: "/maintenance-plan", title: "Maintenance Plans" },
-  { url: "/careers", title: "Careers" },
-  { url: "/our-guarantees", title: "Our Guarantees" },
-  { url: "/service-area", title: "Service Area" },
-  { url: "/blog", title: "Blog" },
-  { url: "/all-offers", title: "All Offers" },
-  { url: "/privacy-policy", title: "Privacy Policy" },
 ];
 
-async function fetchAllServices(): Promise<{ url: string; lastmod: string }[]> {
+const resourcePages = [
+  { url: "/financing-options-plans", title: "Financing Options & Plans" },
+  { url: "/maintenance-plan", title: "Maintenance Plans" },
+  { url: "/all-offers", title: "All Offers" },
+  { url: "/careers", title: "Careers" },
+  { url: "/blog", title: "Blog" },
+];
+
+const legalPages = [{ url: "/privacy-policy", title: "Privacy Policy" }];
+
+async function fetchServices(): Promise<Service[]> {
   try {
     const res = await fetch(
       `${API_URL}/api/services?where[active][equals]=true&where[hasPage][equals]=true&limit=1000&depth=2`,
     );
     if (!res.ok) return [];
-
     const data = await res.json();
-    const services = data.docs || [];
-
-    const urls: { url: string; lastmod: string }[] = [];
-
-    for (const service of services) {
-      if (!service.slug) continue;
-
-      try {
-        const path = await buildServicePath(service);
-        urls.push({
-          url: `${SITE_URL}${path}`,
-          lastmod: service.updatedAt || new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error(
-          `Error building path for service ${service.slug}:`,
-          error,
-        );
-      }
-    }
-
-    return urls;
+    return data.docs || [];
   } catch (error) {
     console.error("Error fetching services:", error);
     return [];
@@ -99,123 +101,647 @@ async function fetchJobs(): Promise<Job[]> {
   return [];
 }
 
-const now = new Date().toISOString();
+async function fetchOffers(): Promise<Offer[]> {
+  try {
+    const res = await fetch(
+      `${API_URL}/api/offers?where[active][equals]=true&limit=1000&depth=0`,
+    );
+    if (res.ok) {
+      const data = await res.json();
+      return data.docs || [];
+    }
+  } catch (error) {
+    console.error("Error fetching offers:", error);
+  }
+  return [];
+}
 
-const [serviceUrls, posts, jobs] = await Promise.all([
-  fetchAllServices(),
+const [services, posts, jobs, offers] = await Promise.all([
+  fetchServices(),
   fetchPosts(),
   fetchJobs(),
+  fetchOffers(),
 ]);
 
-const allUrls: { url: string; lastmod: string }[] = [];
+// Organizar servicios por categoría
+const plumbingServices: { url: string; title: string }[] = [];
+const drainServices: { url: string; title: string }[] = [];
+const hvacServices: { url: string; title: string }[] = [];
 
-// Static pages
-for (const page of staticPages) {
-  allUrls.push({ url: `${SITE_URL}${page.url}`, lastmod: now });
+for (const service of services) {
+  if (!service.slug) continue;
+
+  try {
+    const path = await buildServicePath(service);
+    const item = { url: path, title: service.title || service.slug };
+
+    if (path.startsWith("/plumbing-services")) {
+      plumbingServices.push(item);
+    } else if (path.startsWith("/drain-services")) {
+      drainServices.push(item);
+    } else if (path.startsWith("/hvac-services")) {
+      hvacServices.push(item);
+    }
+  } catch (error) {
+    console.error(`Error building path for ${service.slug}:`, error);
+  }
 }
 
-// Services
-allUrls.push(...serviceUrls);
+const blogPosts = posts
+  .filter((p) => p.slug)
+  .map((post) => ({
+    url: `/blog/${post.slug}`,
+    title: post.title || post.slug,
+  }));
 
-// Blog posts
-for (const post of posts.filter((p) => p.slug)) {
-  allUrls.push({
-    url: `${SITE_URL}/blog/${post.slug}`,
-    lastmod: post.updatedAt || now,
-  });
-}
+const jobListings = jobs
+  .filter((j) => j.slug)
+  .map((job) => ({
+    url: `/job/${job.slug}`,
+    title: job.title || job.slug,
+  }));
 
-// Jobs
-for (const job of jobs.filter((j) => j.slug)) {
-  allUrls.push({
-    url: `${SITE_URL}/job/${job.slug}`,
-    lastmod: job.updatedAt || now,
-  });
-}
+const offersList = offers
+  .filter((o) => o.slug)
+  .map((offer) => ({
+    url: `/all-offers/${offer.slug}`,
+    title: offer.title || offer.slug,
+  }));
+
+const totalPages =
+  mainPages.length +
+  aboutPages.length +
+  contactPages.length +
+  resourcePages.length +
+  legalPages.length +
+  plumbingServices.length +
+  drainServices.length +
+  hvacServices.length +
+  blogPosts.length +
+  jobListings.length +
+  offersList.length;
+
+const seoData = {
+  metaTitle: "Sitemap | Evergreen Services",
+  metaDescription:
+    "Complete sitemap of Evergreen Services website - Plumbing, Drain, HVAC services in Rhode Island",
+};
 ---
 
-<!doctype html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>XML Sitemap</title>
-    <style>
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans,
-          Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-        color: #333;
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      h1 {
-        color: #1a1a1a;
-        font-size: 36px;
-        margin-bottom: 10px;
-      }
-      .intro {
-        margin-bottom: 40px;
-        font-size: 16px;
-        color: #666;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-      th {
-        background: #f4f4f4;
-        padding: 12px;
-        text-align: left;
-        font-weight: 600;
-      }
-      td {
-        padding: 12px;
-        border-bottom: 1px solid #eee;
-      }
-      tr:hover {
-        background: #f9f9f9;
-      }
-      .url {
-        color: #0066cc;
-        text-decoration: none;
-      }
-      .url:hover {
-        text-decoration: underline;
-      }
-      .lastmod {
-        color: #666;
-        font-size: 14px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>XML Sitemap</h1>
-    <div class="intro">
-      This is a sitemap generated by Evergreen Services to allow search engines
-      to better index this website's content.
-    </div>
-    <table>
-      <tbody>
-        <tr>
-          <th>URL</th>
-          <th>Last Modified</th>
-        </tr>
+<Layout seoData={seoData} navbarBG={true}>
+  <section class="pt-28 pb-16 bg-white min-h-screen">
+    <div class="container mx-auto px-4 max-w-6xl">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-neutral-900 mb-3">
+          Sitemap
+        </h1>
+        <p class="text-neutral-600">All pages on Evergreen Services website</p>
+      </div>
+
+      <!-- Stats -->
+      <div class="flex justify-center gap-4 md:gap-8 flex-wrap mb-12">
+        <div class="bg-neutral-100 px-6 py-4 rounded-xl text-center">
+          <div class="text-2xl font-bold text-evergreen-primary">
+            {totalPages}
+          </div>
+          <div class="text-sm text-neutral-600">Total Pages</div>
+        </div>
+        <div class="bg-neutral-100 px-6 py-4 rounded-xl text-center">
+          <div class="text-2xl font-bold text-evergreen-primary">
+            {
+              plumbingServices.length +
+                drainServices.length +
+                hvacServices.length
+            }
+          </div>
+          <div class="text-sm text-neutral-600">Services</div>
+        </div>
+        <div class="bg-neutral-100 px-6 py-4 rounded-xl text-center">
+          <div class="text-2xl font-bold text-evergreen-primary">
+            {blogPosts.length}
+          </div>
+          <div class="text-sm text-neutral-600">Blog Posts</div>
+        </div>
+        <div class="bg-neutral-100 px-6 py-4 rounded-xl text-center">
+          <div class="text-2xl font-bold text-evergreen-primary">
+            {jobListings.length}
+          </div>
+          <div class="text-sm text-neutral-600">Job Openings</div>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Main Pages -->
+        <div
+          class="bg-white border border-neutral-200 rounded-xl overflow-hidden"
+        >
+          <div
+            class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3"
+          >
+            <svg
+              class="w-5 h-5 text-evergreen-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              ></path>
+            </svg>
+            <h2 class="font-semibold text-neutral-900">Main</h2>
+            <span
+              class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full"
+              >{mainPages.length}</span
+            >
+          </div>
+          <ul>
+            {
+              mainPages.map((page) => (
+                <li class="border-b border-neutral-100 last:border-b-0">
+                  <a
+                    href={page.url}
+                    class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                  >
+                    {page.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <!-- About Us -->
+        <div
+          class="bg-white border border-neutral-200 rounded-xl overflow-hidden"
+        >
+          <div
+            class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3"
+          >
+            <svg
+              class="w-5 h-5 text-evergreen-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <h2 class="font-semibold text-neutral-900">About Us</h2>
+            <span
+              class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full"
+              >{aboutPages.length}</span
+            >
+          </div>
+          <ul>
+            {
+              aboutPages.map((page) => (
+                <li class="border-b border-neutral-100 last:border-b-0">
+                  <a
+                    href={page.url}
+                    class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                  >
+                    {page.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <!-- Contact -->
+        <div
+          class="bg-white border border-neutral-200 rounded-xl overflow-hidden"
+        >
+          <div
+            class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3"
+          >
+            <svg
+              class="w-5 h-5 text-evergreen-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              ></path>
+            </svg>
+            <h2 class="font-semibold text-neutral-900">Contact</h2>
+            <span
+              class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full"
+              >{contactPages.length}</span
+            >
+          </div>
+          <ul>
+            {
+              contactPages.map((page) => (
+                <li class="border-b border-neutral-100 last:border-b-0">
+                  <a
+                    href={page.url}
+                    class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                  >
+                    {page.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <!-- Resources -->
+        <div
+          class="bg-white border border-neutral-200 rounded-xl overflow-hidden"
+        >
+          <div
+            class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3"
+          >
+            <svg
+              class="w-5 h-5 text-evergreen-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              ></path>
+            </svg>
+            <h2 class="font-semibold text-neutral-900">Resources</h2>
+            <span
+              class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full"
+              >{resourcePages.length}</span
+            >
+          </div>
+          <ul>
+            {
+              resourcePages.map((page) => (
+                <li class="border-b border-neutral-100 last:border-b-0">
+                  <a
+                    href={page.url}
+                    class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                  >
+                    {page.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <!-- Plumbing Services -->
         {
-          allUrls.map((item) => (
-            <tr>
-              <td>
-                <a class="url" href={item.url}>
-                  {item.url}
-                </a>
-              </td>
-              <td class="lastmod">{item.lastmod}</td>
-            </tr>
-          ))
+          plumbingServices.length > 0 && (
+            <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+              <div class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3">
+                <svg
+                  width="26"
+                  height="31"
+                  viewBox="0 0 26 31"
+                  fill="currentColor"
+                  stroke="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5 text-evergreen-primary"
+                >
+                  <path d="M24.6043 11.0205L18.9816 5.43095L15.592 8.76087L12.2025 5.43095L16.7086 0.911765C17.0276 0.594629 17.3865 0.363384 17.7853 0.218031C18.184 0.0726769 18.5828 0 18.9816 0C19.407 0 19.8124 0.0726769 20.1979 0.218031C20.5833 0.363384 20.9223 0.594629 21.2147 0.911765L24.6043 4.28133C25.0828 4.73061 25.4351 5.25256 25.661 5.84719C25.887 6.44182 26 7.04305 26 7.6509C26 8.25874 25.887 8.85337 25.661 9.43478C25.4351 10.0162 25.0828 10.5448 24.6043 11.0205ZM2.6319 18.3146C2.15337 17.8389 1.91411 17.2773 1.91411 16.6298C1.91411 15.9823 2.15337 15.4207 2.6319 14.945L6.5399 11.0205L9.9294 14.39L5.9816 18.3146C5.52965 18.7903 4.97802 19.0281 4.32669 19.0281C3.67536 19.0281 3.11043 18.7903 2.6319 18.3146ZM0.91718 30.0882C0.62474 29.7711 0.39877 29.4209 0.23926 29.0377C0.07975 28.6545 0 28.2515 0 27.8286C0 27.4058 0.07311 27.0028 0.21933 26.6196C0.36554 26.2364 0.59816 25.8862 0.91718 25.5691L12.2025 14.39L7.138 9.31586C6.6595 8.86658 6.4202 8.3182 6.4202 7.67072C6.4202 7.02323 6.6595 6.46164 7.138 5.98593C7.59 5.51023 8.1483 5.27238 8.8129 5.27238C9.4775 5.27238 10.0491 5.51023 10.5276 5.98593L15.592 11.0205L17.865 8.76087L22.3313 13.2801C22.6503 13.5972 22.8098 13.9672 22.8098 14.39C22.8098 14.8129 22.6503 15.1829 22.3313 15.5C22.0123 15.8171 21.6401 15.9757 21.2147 15.9757C20.7894 15.9757 20.4172 15.8171 20.0982 15.5L5.42331 30.0882C5.10429 30.4054 4.75204 30.6366 4.36656 30.782C3.98108 30.9273 3.58896 31 3.19018 31C2.79141 31 2.39264 30.9207 1.99387 30.7621C1.59509 30.6036 1.2362 30.3789 0.91718 30.0882Z" />
+                </svg>
+                <h2 class="font-semibold text-neutral-900">
+                  Plumbing Services
+                </h2>
+                <span class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full">
+                  {plumbingServices.length}
+                </span>
+              </div>
+              <ul class="max-h-64 overflow-y-auto">
+                {plumbingServices.map((service) => (
+                  <li class="border-b border-neutral-100 last:border-b-0">
+                    <a
+                      href={service.url}
+                      class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                    >
+                      {service.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
         }
-      </tbody>
-    </table>
-  </body>
-</html>
+
+        <!-- Drain Services -->
+        {
+          drainServices.length > 0 && (
+            <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+              <div class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3">
+                <svg
+                  width="36"
+                  height="36"
+                  viewBox="0 0 36 36"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5 text-evergreen-primary"
+                >
+                  <path
+                    d="M18 5.46875C13.2883 5.46875 9.46875 9.28834 9.46875 14C9.46875 18.7117 13.2883 22.5312 18 22.5312C22.7117 22.5312 26.5313 18.7117 26.5313 14C26.5313 9.28834 22.7117 5.46875 18 5.46875Z"
+                    stroke="#0FA623"
+                    stroke-width="2.34375"
+                    stroke-miterlimit="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M5.09375 6.5625V21.4375C5.09375 24.4578 7.54216 26.9062 10.5625 26.9062H25.4375C28.4578 26.9062 30.9063 24.4578 30.9063 21.4375V6.5625C30.9063 3.54216 28.4578 1.09375 25.4375 1.09375H10.5625C7.54216 1.09375 5.09375 3.54216 5.09375 6.5625Z"
+                    stroke="#0FA623"
+                    stroke-width="2.34375"
+                    stroke-miterlimit="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M22.7031 14.001H13.2969"
+                    stroke="#0FA623"
+                    stroke-width="2.34375"
+                    stroke-miterlimit="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M20.5156 9.89941H15.4844"
+                    stroke="#0FA623"
+                    stroke-width="2.34375"
+                    stroke-miterlimit="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M20.5156 18.1025H15.4844"
+                    stroke="#0FA623"
+                    stroke-width="2.34375"
+                    stroke-miterlimit="10"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <circle
+                    cx="26.6406"
+                    cy="5.41382"
+                    r="1.33789"
+                    fill="#0FA623"
+                  />
+                  <circle
+                    cx="26.6406"
+                    cy="22.6953"
+                    r="1.33789"
+                    fill="#0FA623"
+                  />
+                  <circle cx="9.25" cy="5.41382" r="1.33789" fill="#0FA623" />
+                  <circle
+                    cx="9.30469"
+                    cy="22.6953"
+                    r="1.33789"
+                    fill="#0FA623"
+                  />
+                </svg>
+                <h2 class="font-semibold text-neutral-900">Drain Services</h2>
+                <span class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full">
+                  {drainServices.length}
+                </span>
+              </div>
+              <ul class="max-h-64 overflow-y-auto">
+                {drainServices.map((service) => (
+                  <li class="border-b border-neutral-100 last:border-b-0">
+                    <a
+                      href={service.url}
+                      class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                    >
+                      {service.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        <!-- HVAC Services -->
+        {
+          hvacServices.length > 0 && (
+            <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+              <div class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3">
+                <svg
+                  width="23"
+                  height="27"
+                  viewBox="0 0 23 27"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="w-5 h-5 text-evergreen-primary"
+                >
+                  <path
+                    d="M2.875 15.6316C2.875 16.8632 3.12656 18.0296 3.62969 19.1309C4.13281 20.2322 4.85156 21.1974 5.78594 22.0263C5.76198 21.9079 5.75 21.8013 5.75 21.7066V21.3868C5.75 20.6289 5.89375 19.9184 6.18125 19.2553C6.46875 18.5921 6.88802 17.9882 7.43906 17.4434L11.5 13.5L15.5609 17.4434C16.112 17.9882 16.5312 18.5921 16.8188 19.2553C17.1062 19.9184 17.25 20.6289 17.25 21.3868V21.7066C17.25 21.8013 17.238 21.9079 17.2141 22.0263C18.1484 21.1974 18.8672 20.2322 19.3703 19.1309C19.8734 18.0296 20.125 16.8632 20.125 15.6316C20.125 14.4474 19.9034 13.3283 19.4602 12.2743C19.0169 11.2204 18.376 10.2789 17.5375 9.45C17.0583 9.75789 16.5552 9.98882 16.0281 10.1428C15.501 10.2967 14.962 10.3737 14.4109 10.3737C12.9255 10.3737 11.6378 9.88816 10.5477 8.91711C9.45755 7.94605 8.82865 6.75 8.66094 5.32895C7.72656 6.11053 6.9 6.92171 6.18125 7.7625C5.4625 8.60329 4.85755 9.45592 4.36641 10.3204C3.87526 11.1849 3.50391 12.0671 3.25234 12.9671C3.00078 13.8671 2.875 14.7553 2.875 15.6316ZM11.5 17.4789L9.45156 19.4684C9.18802 19.7289 8.98438 20.025 8.84062 20.3566C8.69687 20.6882 8.625 21.0316 8.625 21.3868C8.625 22.1447 8.90651 22.7961 9.46953 23.3408C10.0326 23.8855 10.7094 24.1579 11.5 24.1579C12.2906 24.1579 12.9674 23.8855 13.5305 23.3408C14.0935 22.7961 14.375 22.1447 14.375 21.3868C14.375 21.0079 14.3031 20.6586 14.1594 20.3388C14.0156 20.0191 13.812 19.7289 13.5484 19.4684L11.5 17.4789ZM11.5 0V4.68947C11.5 5.49474 11.7815 6.16974 12.3445 6.71447C12.9076 7.25921 13.5964 7.53158 14.4109 7.53158C14.8422 7.53158 15.2435 7.44276 15.6148 7.26513C15.9862 7.0875 16.3156 6.82105 16.6031 6.46579L17.25 5.68421C19.0229 6.67895 20.4245 8.06447 21.4547 9.84079C22.4849 11.6171 23 13.5474 23 15.6316C23 18.8053 21.8859 21.4934 19.6578 23.6961C17.4297 25.8987 14.7104 27 11.5 27C8.28958 27 5.57031 25.8987 3.34219 23.6961C1.11406 21.4934 0 18.8053 0 15.6316C0 12.5763 1.0362 9.675 3.10859 6.92763C5.18099 4.18026 7.97812 1.87105 11.5 0Z"
+                    fill="currentColor"
+                  />
+                </svg>
+
+                <h2 class="font-semibold text-neutral-900">HVAC Services</h2>
+                <span class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full">
+                  {hvacServices.length}
+                </span>
+              </div>
+              <ul class="max-h-64 overflow-y-auto">
+                {hvacServices.map((service) => (
+                  <li class="border-b border-neutral-100 last:border-b-0">
+                    <a
+                      href={service.url}
+                      class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                    >
+                      {service.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        <!-- Special Offers -->
+        {
+          offersList.length > 0 && (
+            <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+              <div class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3">
+                <svg
+                  class="w-5 h-5 text-evergreen-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"
+                  />
+                </svg>
+                <h2 class="font-semibold text-neutral-900">Special Offers</h2>
+                <span class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full">
+                  {offersList.length}
+                </span>
+              </div>
+              <ul class="max-h-64 overflow-y-auto">
+                {offersList.map((offer) => (
+                  <li class="border-b border-neutral-100 last:border-b-0">
+                    <a
+                      href={offer.url}
+                      class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                    >
+                      {offer.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        <!-- Blog Posts -->
+        {
+          blogPosts.length > 0 && (
+            <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+              <div class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3">
+                <svg
+                  class="w-5 h-5 text-evergreen-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                  />
+                </svg>
+                <h2 class="font-semibold text-neutral-900">Blog</h2>
+                <span class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full">
+                  {blogPosts.length}
+                </span>
+              </div>
+              <ul class="max-h-64 overflow-y-auto">
+                {blogPosts.map((post) => (
+                  <li class="border-b border-neutral-100 last:border-b-0">
+                    <a
+                      href={post.url}
+                      class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                    >
+                      {post.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        <!-- Careers -->
+        {
+          jobListings.length > 0 && (
+            <div class="bg-white border border-neutral-200 rounded-xl overflow-hidden">
+              <div class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3">
+                <svg
+                  class="w-5 h-5 text-evergreen-primary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+                <h2 class="font-semibold text-neutral-900">Careers</h2>
+                <span class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full">
+                  {jobListings.length}
+                </span>
+              </div>
+              <ul class="max-h-64 overflow-y-auto">
+                {jobListings.map((job) => (
+                  <li class="border-b border-neutral-100 last:border-b-0">
+                    <a
+                      href={job.url}
+                      class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                    >
+                      {job.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        }
+
+        <!-- Legal -->
+        <div
+          class="bg-white border border-neutral-200 rounded-xl overflow-hidden"
+        >
+          <div
+            class="bg-neutral-50 px-5 py-4 border-b border-neutral-200 flex items-center gap-3"
+          >
+            <svg
+              class="w-5 h-5 text-evergreen-primary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              ></path>
+            </svg>
+            <h2 class="font-semibold text-neutral-900">Legal</h2>
+            <span
+              class="ml-auto bg-evergreen-primary text-white text-xs px-2 py-1 rounded-full"
+              >{legalPages.length}</span
+            >
+          </div>
+          <ul>
+            {
+              legalPages.map((page) => (
+                <li class="border-b border-neutral-100 last:border-b-0">
+                  <a
+                    href={page.url}
+                    class="block px-5 py-3 text-neutral-700 hover:bg-evergreen-50 hover:text-evergreen-primary transition-colors text-sm"
+                  >
+                    {page.title}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Footer link -->
+      <div class="text-center mt-12 text-sm text-neutral-500">
+        <a
+          href="/sitemap.xml"
+          class="text-evergreen-primary hover:underline"
+          >XML Sitemap</a
+        >
+      </div>
+    </div>
+  </section>
+</Layout>

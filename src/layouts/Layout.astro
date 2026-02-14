@@ -8,9 +8,9 @@ import { getImageUrl } from "@/utils/payload";
 import ContactModal from "../components/ContactModal.astro";
 
 interface Props {
-  seoData: {
-    metaTitle: string;
-    metaDescription: string;
+  seoData?: {
+    metaTitle?: string;
+    metaDescription?: string;
     keywords?: string;
     schemaMarkup?: string;
   };
@@ -29,7 +29,11 @@ const getSiteSettings = async () => {
 const siteSettings = await getSiteSettings();
 const { company, contact, socialMedia } = siteSettings;
 
-const { metaTitle, metaDescription, keywords, schemaMarkup } = seoData;
+// Valores por defecto si seoData no existe o está incompleto
+const metaTitle = seoData?.metaTitle || "Evergreen Services RI";
+const metaDescription = seoData?.metaDescription || "";
+const keywords = seoData?.keywords;
+const schemaMarkup = seoData?.schemaMarkup;
 
 // URL canónica de la página actual
 const canonicalURL = Astro.url.href;
@@ -95,7 +99,7 @@ finalSchema = JSON.parse(JSON.stringify(finalSchema));
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Basic Meta Tags -->
-    <title>{metaTitle ? metaTitle : "Evergreen Services RI"}</title>
+    <title>{metaTitle}</title>
     <meta name="description" content={metaDescription} />
     {keywords && <meta name="keywords" content={keywords} />}
 
