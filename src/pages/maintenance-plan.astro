@@ -133,7 +133,7 @@ const generateBreadcrumbs = () => {
                         {checkItem.item}
                         {system.showMore &&
                           index === system.checkItems.length - 1 && (
-                            <button class="text-evergreen-primary font-semibold ml-1 hover:underline">
+                            <button class="text-evergreen-primary cursor-pointer font-semibold ml-1 hover:underline">
                               ...more
                             </button>
                           )}
@@ -224,7 +224,7 @@ const generateBreadcrumbs = () => {
           </div>
           <button
             type="submit"
-            class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
+            class="w-full bg-evergreen-primary cursor-pointer hover:bg-evergreen-600 text-white py-3 rounded-full font-bold text-base transition-colors"
           >
             {contactForm.submitText}
           </button>
@@ -398,7 +398,7 @@ const generateBreadcrumbs = () => {
             </div>
             <button
               type="submit"
-              class="w-full bg-evergreen-primary hover:bg-evergreen-600 text-white py-4 rounded-full font-bold text-lg transition-colors"
+              class="w-full bg-evergreen-primary cursor-pointer hover:bg-evergreen-600 text-white py-4 rounded-full font-bold text-lg transition-colors"
             >
               {contactForm.submitText}
             </button>

@@ -80,7 +80,7 @@ const {
             <button
               type="button"
               onclick="openContactModal()"
-              class="inline-flex items-center justify-center gap-2 bg-black text-white md:px-8 md:py-4 p-1 rounded-full font-bold transition-colors text-base border-2 border-evergreen-primary w-full sm:w-auto"
+              class="inline-flex items-center justify-center gap-2 bg-black text-white md:px-8 md:py-4 p-1 rounded-full font-bold transition-colors text-base border-2 border-evergreen-primary w-full sm:w-auto cursor-pointer"
             >
               {primaryButton.showIcon && <Icon name="email" size={20} />}
               {primaryButton.text}
@@ -93,7 +93,7 @@ const {
           secondaryButton.enabled && (
             <a
               href={`tel:${contact.phone.replace(/\D/g, "")}`}
-              class="inline-flex items-center justify-center gap-2 bg-evergreen-primary  text-white text-sm md:text-base md:px-8 md:py-4 p-2 rounded-full font-bold transition-colors shadow-lg w-full sm:w-auto"
+              class="inline-flex items-center justify-center gap-2 bg-evergreen-primary  text-white text-sm md:text-base md:px-8 md:py-4 p-2 rounded-full font-bold transition-colors shadow-lg w-full sm:w-auto cursor-pointer"
             >
               {secondaryButton.showPhoneIcon && (
                 <Icon name="phone-add" size={20} />
