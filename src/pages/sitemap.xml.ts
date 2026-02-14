@@ -1,4 +1,4 @@
-// apps/web/src/pages/sitemap.xml.ts
+// apps/web/src/pages/sitemap-index.xml.ts
 import type { APIRoute } from "astro";
 import { buildServicePath } from "../utils/navigation";
 
@@ -7,30 +7,28 @@ const API_URL = import.meta.env.PUBLIC_API_URL;
 
 interface Post {
   slug: string;
-  title: string;
   updatedAt: string;
 }
 
 interface Job {
   slug: string;
-  title: string;
   updatedAt: string;
 }
 
 const staticPages = [
-  { url: "/", title: "Home" },
-  { url: "/about-us", title: "About Us" },
-  { url: "/contact-us", title: "Contact Us" },
-  { url: "/customer-service", title: "Customer Service" },
-  { url: "/24-7-emergency-services", title: "24/7 Emergency Services" },
-  { url: "/financing-options-plans", title: "Financing Options & Plans" },
-  { url: "/maintenance-plan", title: "Maintenance Plans" },
-  { url: "/careers", title: "Careers" },
-  { url: "/our-guarantees", title: "Our Guarantees" },
-  { url: "/service-area", title: "Service Area" },
-  { url: "/blog", title: "Blog" },
-  { url: "/all-offers", title: "All Offers" },
-  { url: "/privacy-policy", title: "Privacy Policy" },
+  { url: "/", priority: "1.0", changefreq: "weekly" },
+  { url: "/about-us", priority: "0.8", changefreq: "monthly" },
+  { url: "/contact-us", priority: "0.9", changefreq: "monthly" },
+  { url: "/customer-service", priority: "0.8", changefreq: "monthly" },
+  { url: "/24-7-emergency-services", priority: "0.9", changefreq: "monthly" },
+  { url: "/financing-options-plans", priority: "0.8", changefreq: "monthly" },
+  { url: "/maintenance-plan", priority: "0.8", changefreq: "monthly" },
+  { url: "/careers", priority: "0.7", changefreq: "weekly" },
+  { url: "/our-guarantees", priority: "0.7", changefreq: "monthly" },
+  { url: "/service-area", priority: "0.8", changefreq: "monthly" },
+  { url: "/blog", priority: "0.8", changefreq: "daily" },
+  { url: "/all-offers", priority: "0.8", changefreq: "weekly" },
+  { url: "/privacy-policy", priority: "0.3", changefreq: "yearly" },
 ];
 
 async function fetchAllServices(): Promise<{ url: string; lastmod: string }[]> {
@@ -108,117 +106,57 @@ export const GET: APIRoute = async () => {
     fetchJobs(),
   ]);
 
-  const allUrls: { url: string; lastmod: string }[] = [];
+  const urls: string[] = [];
 
   // Static pages
   for (const page of staticPages) {
-    allUrls.push({ url: `${SITE_URL}${page.url}`, lastmod: now });
+    urls.push(`  <url>
+    <loc>${SITE_URL}${page.url}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`);
   }
 
-  // Services (ya tienen URL completa)
-  allUrls.push(...serviceUrls);
+  // Services
+  for (const service of serviceUrls) {
+    urls.push(`  <url>
+    <loc>${service.url}</loc>
+    <lastmod>${service.lastmod}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`);
+  }
 
   // Blog posts
   for (const post of posts.filter((p) => p.slug)) {
-    allUrls.push({
-      url: `${SITE_URL}/blog/${post.slug}`,
-      lastmod: post.updatedAt || now,
-    });
+    urls.push(`  <url>
+    <loc>${SITE_URL}/blog/${post.slug}</loc>
+    <lastmod>${post.updatedAt || now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>`);
   }
 
   // Jobs
   for (const job of jobs.filter((j) => j.slug)) {
-    allUrls.push({
-      url: `${SITE_URL}/job/${job.slug}`,
-      lastmod: job.updatedAt || now,
-    });
+    urls.push(`  <url>
+    <loc>${SITE_URL}/job/${job.slug}</loc>
+    <lastmod>${job.updatedAt || now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>`);
   }
 
-  const rows = allUrls
-    .map(
-      (item) => `<tr>
-<td><a class="url" href="${item.url}">${item.url}</a></td>
-<td class="lastmod">${item.lastmod}</td>
-</tr>`,
-    )
-    .join("\n");
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
 
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>XML Sitemap</title>
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
-  color: #333;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
-h1 {
-  color: #1a1a1a;
-  font-size: 36px;
-  margin-bottom: 10px;
-}
-.intro {
-  margin-bottom: 40px;
-  font-size: 16px;
-  color: #666;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-th {
-  background: #f4f4f4;
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-}
-td {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-}
-tr:hover {
-  background: #f9f9f9;
-}
-.url {
-  color: #0066cc;
-  text-decoration: none;
-}
-.url:hover {
-  text-decoration: underline;
-}
-.lastmod {
-  color: #666;
-  font-size: 14px;
-}
-</style>
-</head>
-<body>
-<h1>XML Sitemap</h1>
-<div class="intro">
-This is a sitemap generated by Evergreen Services to allow search engines to better index this website's content.
-</div>
-<table>
-<tbody>
-<tr>
-<th>URL</th>
-<th>Last Modified</th>
-</tr>
-${rows}
-</tbody>
-</table>
-</body>
-</html>`;
-
-  return new Response(html, {
+  return new Response(sitemap, {
     status: 200,
     headers: {
-      "Content-Type": "text/html; charset=utf-8",
+      "Content-Type": "application/xml; charset=utf-8",
     },
   });
 };
