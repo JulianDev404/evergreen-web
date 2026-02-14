@@ -1,14 +1,9 @@
 // apps/web/src/pages/sitemap.xml.ts
 import type { APIRoute } from "astro";
+import { buildServicePath } from "../utils/navigation";
 
 const SITE_URL = import.meta.env.SITE_URL || "https://evergreenplumbingri.com";
 const API_URL = import.meta.env.PUBLIC_API_URL;
-
-interface Service {
-  slug: string;
-  title: string;
-  updatedAt: string;
-}
 
 interface Post {
   slug: string;
@@ -38,19 +33,40 @@ const staticPages = [
   { url: "/privacy-policy", title: "Privacy Policy" },
 ];
 
-async function fetchServices(): Promise<Service[]> {
+async function fetchAllServices(): Promise<{ url: string; lastmod: string }[]> {
   try {
     const res = await fetch(
-      `${API_URL}/api/services?where[active][equals]=true&where[hasPage][equals]=true&limit=1000&depth=0`,
+      `${API_URL}/api/services?where[active][equals]=true&where[hasPage][equals]=true&limit=1000&depth=2`,
     );
-    if (res.ok) {
-      const data = await res.json();
-      return data.docs || [];
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    const services = data.docs || [];
+
+    const urls: { url: string; lastmod: string }[] = [];
+
+    for (const service of services) {
+      if (!service.slug) continue;
+
+      try {
+        const path = await buildServicePath(service);
+        urls.push({
+          url: `${SITE_URL}${path}`,
+          lastmod: service.updatedAt || new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error(
+          `Error building path for service ${service.slug}:`,
+          error,
+        );
+      }
     }
+
+    return urls;
   } catch (error) {
     console.error("Error fetching services:", error);
+    return [];
   }
-  return [];
 }
 
 async function fetchPosts(): Promise<Post[]> {
@@ -86,25 +102,23 @@ async function fetchJobs(): Promise<Job[]> {
 export const GET: APIRoute = async () => {
   const now = new Date().toISOString();
 
-  const [services, posts, jobs] = await Promise.all([
-    fetchServices(),
+  const [serviceUrls, posts, jobs] = await Promise.all([
+    fetchAllServices(),
     fetchPosts(),
     fetchJobs(),
   ]);
 
   const allUrls: { url: string; lastmod: string }[] = [];
 
+  // Static pages
   for (const page of staticPages) {
     allUrls.push({ url: `${SITE_URL}${page.url}`, lastmod: now });
   }
 
-  for (const service of services.filter((s) => s.slug)) {
-    allUrls.push({
-      url: `${SITE_URL}/plumbing-services/${service.slug}`,
-      lastmod: service.updatedAt || now,
-    });
-  }
+  // Services (ya tienen URL completa)
+  allUrls.push(...serviceUrls);
 
+  // Blog posts
   for (const post of posts.filter((p) => p.slug)) {
     allUrls.push({
       url: `${SITE_URL}/blog/${post.slug}`,
@@ -112,6 +126,7 @@ export const GET: APIRoute = async () => {
     });
   }
 
+  // Jobs
   for (const job of jobs.filter((j) => j.slug)) {
     allUrls.push({
       url: `${SITE_URL}/job/${job.slug}`,
