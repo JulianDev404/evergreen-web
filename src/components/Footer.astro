@@ -38,6 +38,10 @@ const { company, contact, socialMedia, footer, legal, payment } = siteSettings;
             {company.name}.
           </p>
           <p class="text-white text-md">
+        <a href={legal.sitemapUrl} class="hover:text-[#0FA623] transition-colors font-bold">{legal.sitemapText}</a>
+          </p>
+          
+          <p class="text-white text-md">
             {footer.copyrightText} |
             <a
               href={legal.privacyPolicyUrl}
@@ -46,7 +50,10 @@ const { company, contact, socialMedia, footer, legal, payment } = siteSettings;
               Privacy Policy
             </a>
           </p>
-
+          
+          </p>
+          
+            
           <!-- Social Media -->
           {
             (socialMedia?.facebook ||
@@ -224,6 +231,11 @@ const { company, contact, socialMedia, footer, legal, payment } = siteSettings;
         Copyright © {footer.copyrightYear}
         {company.name}.
       </p>
+
+      <p class="text-white text-center font-bold text-sm">
+        <a href={legal.sitemapUrl} class="hover:text-[#0FA623] transition-colors font-bold">{legal.sitemapText}</a>
+      </p>
+      
 
       <!-- 24/7 Live Answering -->
       {footer.show24_7Badge && (
