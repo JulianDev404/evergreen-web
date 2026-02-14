@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://evergreenplumbingri.com/sitemap-index.xml
